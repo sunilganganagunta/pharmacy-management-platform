@@ -82,6 +82,8 @@ jobs:
     name: Deploy to Amazon EC2
     needs: [build-and-push-ecr]
     runs-on: ubuntu-latest
+    env:
+      HAS_SSH_KEY: ${{ secrets.EC2_SSH_KEY != '' }}
     steps:
       - name: 1. Checkout Deployment Scripts & Compose Config
         uses: actions/checkout@v4
@@ -95,7 +97,7 @@ jobs:
 
       # Deployment Path A: AWS Systems Manager (Zero Open SSH Ports)
       - name: 3. Deploy via AWS Systems Manager (SSM)
-        if: ${{ secrets.EC2_SSH_KEY == '' }}
+        if: env.HAS_SSH_KEY != 'true'
         env:
           EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID || 'i-0be536c99a4381e25' }}
           ECR_REGISTRY: ${{ secrets.ECR_REGISTRY || '774697186763.dkr.ecr.ap-southeast-2.amazonaws.com' }}
@@ -214,7 +216,7 @@ jobs:
 
       # Deployment Path B: Secure SSH (Fallback when EC2_SSH_KEY is set)
       - name: 4. Deploy to EC2 via Secure SSH (Fallback)
-        if: ${{ secrets.EC2_SSH_KEY != '' }}
+        if: env.HAS_SSH_KEY == 'true'
         uses: appleboy/ssh-action@v1.0.3
         env:
           ECR_REGISTRY: ${{ secrets.ECR_REGISTRY || '774697186763.dkr.ecr.ap-southeast-2.amazonaws.com' }}
