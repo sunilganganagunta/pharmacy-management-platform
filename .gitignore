@@ -3,7 +3,7 @@ node_modules/
 /.pnp
 .pnp.js
 
-# Build Outputs
+# Build Outputs & Archives
 target/
 backend/target/
 dist/
@@ -11,6 +11,17 @@ frontend/dist/
 *.class
 *.jar
 *.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# JVM, BlueJ & Java Tools
+*.ctxt
+.mtj.tmp/
+hs_err_pid*
+replay_pid*
 
 # Environment & Secrets
 .env
@@ -53,4 +64,3 @@ pnpm-debug.log*
 # Database data local mounts
 pgdata/
 postgres-data/
-

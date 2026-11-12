@@ -1,14 +1,16 @@
 # MediCore – Smart Pharmacy Management Platform
 ### Cloud Deployment, Docker Containerization, CI/CD Automation & Full-Stack SaaS Architecture
 
-[![CI](https://github.com/your-username/pharmacy-management-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/pharmacy-management-platform/actions/workflows/ci.yml)
-[![CD](https://github.com/your-username/pharmacy-management-platform/actions/workflows/cd.yml/badge.svg)](https://github.com/your-username/pharmacy-management-platform/actions/workflows/cd.yml)
+[![CI](https://github.com/sunilganganagunta/pharmacy-management-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/sunilganganagunta/pharmacy-management-platform/actions/workflows/ci.yml)
+[![CD](https://github.com/sunilganganagunta/pharmacy-management-platform/actions/workflows/cd.yml/badge.svg)](https://github.com/sunilganganagunta/pharmacy-management-platform/actions/workflows/cd.yml)
 [![Java](https://img.shields.io/badge/Java-21%20LTS-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Multi--stage-2496ED.svg)](https://www.docker.com/)
 [![AWS](https://img.shields.io/badge/AWS-EC2%20%7C%20ECR%20%7C%20IAM-FF9900.svg)](https://aws.amazon.com/)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)]()
+
+> A full-stack pharmacy management platform with Java Spring Boot, React, PostgreSQL, Docker, GitHub Actions CI/CD and AWS deployment.
 
 > **Tagline:** Smart Pharmacy Management. Simplified.  
 > **Company:** ALGiONS AI LABS PRIVATE LIMITED  
@@ -390,4 +392,3 @@ A complete 10-slide presentation deck and technical interview questions/answers 
 
 **Developed for ALGiONS AI LABS PRIVATE LIMITED Internship Assignment.**  
 *DevOps and Cloud Engineering Intern*
-
