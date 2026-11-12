@@ -6,6 +6,7 @@ import com.medicore.entity.PurchaseOrder;
 import com.medicore.repository.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.*;
@@ -13,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
+@Transactional(readOnly = true)
 public class DashboardService {
 
     private final MedicineRepository medicineRepository;
