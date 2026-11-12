@@ -20,6 +20,8 @@ public interface MedicineRepository extends JpaRepository<Medicine, Long> {
 
     List<Medicine> findByActiveTrue();
 
+    Page<Medicine> findByActiveTrue(Pageable pageable);
+
     // Low stock medicines
     @Query("SELECT m FROM Medicine m WHERE m.active = true AND m.availableQuantity <= m.minimumStock")
     List<Medicine> findLowStockMedicines();
@@ -47,11 +49,12 @@ public interface MedicineRepository extends JpaRepository<Medicine, Long> {
 
     // Search and filter with pagination
     @Query("SELECT m FROM Medicine m WHERE m.active = true AND " +
-           "(:query IS NULL OR LOWER(m.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           " LOWER(m.genericName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           " LOWER(m.brand) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           " LOWER(m.batchNumber) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           " (m.barcode IS NOT NULL AND LOWER(m.barcode) LIKE LOWER(CONCAT('%', :query, '%')))) AND " +
+           "(:query IS NULL OR " +
+           " LOWER(m.name) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR " +
+           " LOWER(m.genericName) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR " +
+           " LOWER(m.brand) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR " +
+           " LOWER(m.batchNumber) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR " +
+           " (m.barcode IS NOT NULL AND LOWER(m.barcode) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))) AND " +
            "(:categoryId IS NULL OR m.category.id = :categoryId) AND " +
            "(:lowStockOnly IS NULL OR :lowStockOnly = false OR m.availableQuantity <= m.minimumStock)")
     Page<Medicine> searchMedicines(@Param("query") String query,

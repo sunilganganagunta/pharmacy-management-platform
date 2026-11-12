@@ -35,6 +35,9 @@ public class MedicineService {
 
     public Page<MedicineDto> searchMedicines(String query, Long categoryId, Boolean lowStockOnly, Pageable pageable) {
         String cleanQuery = (query != null && !query.trim().isEmpty()) ? query.trim() : null;
+        if (cleanQuery == null && categoryId == null && (lowStockOnly == null || !lowStockOnly)) {
+            return medicineRepository.findByActiveTrue(pageable).map(this::convertToDto);
+        }
         return medicineRepository.searchMedicines(cleanQuery, categoryId, lowStockOnly, pageable)
                 .map(this::convertToDto);
     }
