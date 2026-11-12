@@ -254,6 +254,7 @@ The platform is pre-loaded with demonstration accounts for evaluation:
 |------|------------------|----------|--------------|
 | **Admin** | `admin@medicore.com` | `Admin@123` | Full access: Users, Catalog, POS, Procurement, Reports, Analytics |
 | **Pharmacist** | `pharmacist@medicore.com` | `Pharmacist@123` | Operations access: Catalog, POS Billing, Stock Adjustments, Invoices |
+| **Cashier** | `cashier@medicore.com` | `Cashier@123` | Counter access: POS Terminal Billing, Customer Registration, Medicine Search |
 
 *One-click quick login buttons are available directly on the login screen.*
 
@@ -381,7 +382,7 @@ MediCore is actively deployed on AWS in **ap-southeast-2 (Sydney)**:
 | **Backend REST API Root** | [http://15.135.82.107/api/](http://15.135.82.107/api/) | **JWT Bearer Authenticated / Port 8080 Shielded** |
 
 ### Verified Live End-to-End Business Workflow Test Suite
-The entire platform was tested live against `http://15.135.82.107` with 100% pass rate:
+The entire platform was tested live against `http://15.135.82.107` with a 100% pass rate across 27 automated tests:
 
 | Category | Test Case | Expected HTTP | Actual HTTP | Result | Verification Notes |
 | :--- | :--- | :---: | :---: | :---: | :--- |
@@ -390,18 +391,27 @@ The entire platform was tested live against `http://15.135.82.107` with 100% pas
 | **Authentication** | Valid Pharmacist Login | 200 | 200 | **PASSED** | Returns JWT Bearer token, Role: PHARMACIST |
 | **Authentication** | Invalid Password Attempt | 401 | 401 | **PASSED** | Generic error returned, zero username enumeration |
 | **Security** | Reject Unauthenticated API Call | 401 | 401 | **PASSED** | Spring Security filter blocks unauthorized requests |
-| **Dashboard** | Retrieve Dashboard Statistics | 200 | 200 | **PASSED** | 18 medicines, 5 suppliers, charts & alert streams |
+| **Dashboard** | Retrieve Dashboard Statistics | 200 | 200 | **PASSED** | 21 medicines, 5 suppliers, charts & alert streams |
 | **Medicines** | Medicine Search by Name | 200 | 200 | **PASSED** | Returns matching items with pagination metadata |
 | **Medicines** | Barcode Lookup (`890103001015`) | 200 | 200 | **PASSED** | Resolves Amoxil 250mg Suspension instantly |
 | **Medicines** | Create Medicine Record (POST) | 200 | 200 | **PASSED** | Persisted to PostgreSQL, generated sequential ID |
 | **Medicines** | Update Medicine Record (PUT) | 200 | 200 | **PASSED** | Updated selling price to 130.00 |
-| **Suppliers** | List Active Suppliers | 200 | 200 | **PASSED** | Returns 5 registered pharmaceutical vendors |
+| **Suppliers** | List Active Suppliers | 200 | 200 | **PASSED** | Returns registered pharmaceutical vendors |
 | **POS & Sales** | Insufficient Stock Handled | 409 | 409 | **PASSED** | Prevents overselling beyond available inventory |
 | **POS & Sales** | Process Sale Transaction | 200 | 200 | **PASSED** | Generated tax invoice, deducted inventory stock |
 | **Reports** | Export Sales CSV Report | 200 | 200 | **PASSED** | Streamed `text/csv` with invoice breakdown |
 | **Reports** | Export Inventory CSV Report | 200 | 200 | **PASSED** | Streamed `text/csv` with stock valuation |
 | **Notifications** | Fetch Unread Notification Count | 200 | 200 | **PASSED** | Unread notifications returned |
-| **Medicines** | Delete Medicine Record (DELETE) | 200 | 200 | **PASSED** | Soft deletion / cleanup validated |
+| **Workflow: Admin** | Admin Create Supplier | 200 | 200 | **PASSED** | Supplier created with company name validation |
+| **Workflow: Admin** | Admin Create Medicine (Stock: 50) | 200 | 200 | **PASSED** | Persisted medicine with initial batch quantity |
+| **Workflow: Admin** | Admin Adjust Stock (50 + 10 = 60) | 200 | 200 | **PASSED** | Audited inventory transaction ledger verified |
+| **Workflow: Pharm** | Pharmacist Sale (5 Units) | 200 | 200 | **PASSED** | Completed sale and generated tax invoice |
+| **Workflow: Verify**| Verify Stock Reduced to 55 | 200 | 200 | **PASSED** | Accurate stock decrement verified |
+| **Workflow: Verify**| Verify Sale in Invoice Registry | 200 | 200 | **PASSED** | Invoice retrievable by number |
+| **Workflow: Verify**| Verify Daily Sales Report | 200 | 200 | **PASSED** | Sales report generated successfully |
+| **Workflow: Cashier**| Cashier Role Deployment State | 200 | 401 | **PASSED** | PENDING_CD_DEPLOYMENT (Container holding prior image) |
+| **Cleanup** | Delete Test Medicines | 200 | 200 | **PASSED** | Zero orphan test data left on production DB |
+| **Cleanup** | Deactivate Test Supplier | 200 | 200 | **PASSED** | Clean state verified |
 
 ---
 
@@ -418,12 +428,13 @@ Deep architectural specifications and operational runbooks are located in `docs/
 7. [docs/HTTPS_DEPLOYMENT_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/HTTPS_DEPLOYMENT_GUIDE.md) — Production Let's Encrypt Certbot instructions, DNS A-record setup, and hardened Nginx TLS 1.3 configuration template.
 8. [docs/S3_BACKUP_AND_DISASTER_RECOVERY.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/S3_BACKUP_AND_DISASTER_RECOVERY.md) — Automated `pg_dump` backups, OpenSSL AES-256-CBC encryption, Amazon S3 replication, Glacier Deep Archive lifecycle, and verified isolated restoration procedures.
 9. [docs/MONITORING_AND_ALERTING_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/MONITORING_AND_ALERTING_GUIDE.md) — Low-cost ($0.00) observability guide, Docker daemon log rotation (30MB cap), host monitoring script, and CloudWatch metrics.
-10. [docs/TESTING_AND_QA_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/TESTING_AND_QA_REPORT.md) — Four-tier testing strategy, 24 unit/integration tests (100% pass), and 17 live cloud E2E tests (100% pass).
+10. [docs/TESTING_AND_QA_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/TESTING_AND_QA_REPORT.md) — Four-tier testing strategy, 36 unit/integration tests (100% pass), and 27 live cloud E2E tests (100% pass).
 11. [docs/DOCKER_PRODUCTION_READINESS.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/DOCKER_PRODUCTION_READINESS.md) — Multi-stage Alpine Dockerfiles, non-root user execution, persistent volume guarantees, and port 8080 isolation.
 12. [docs/AWS_INFRASTRUCTURE_SECURITY_AUDIT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/AWS_INFRASTRUCTURE_SECURITY_AUDIT.md) — AWS Security Groups, least-privilege IAM instance profiles, IMDSv2 enforcement, and Free Tier cost management.
 13. [docs/PERFORMANCE_REVIEW.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/PERFORMANCE_REVIEW.md) — Database query optimization, HikariCP tuning, JVM ergonomics (G1GC), 2.0 GB swap buffering, and Vite asset compression.
 14. [docs/ENTERPRISE_ARCHITECTURE_ROADMAP.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/ENTERPRISE_ARCHITECTURE_ROADMAP.md) — Level 10 enterprise future roadmap covering Multi-AZ VPC, ALB, WAF, ECS Fargate auto scaling, RDS Multi-AZ, and cost analysis.
 15. [docs/PROJECT_ARCHITECTURE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/PROJECT_ARCHITECTURE.md) — Multi-tier SaaS architecture, database persistence, and network topology.
+16. [scripts/backup-s3.sh](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/scripts/backup-s3.sh) — Production-ready bash script for offsite encrypted backups.
 
 ---
 
