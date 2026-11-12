@@ -3,6 +3,7 @@ package com.medicore.config;
 import com.medicore.security.AuthEntryPointJwt;
 import com.medicore.security.AuthTokenFilter;
 import com.medicore.security.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +26,9 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final AuthEntryPointJwt unauthorizedHandler;
     private final AuthTokenFilter authTokenFilter;
+
+    @Value("${medicore.swagger.public:true}")
+    private boolean swaggerPublic;
 
     public SecurityConfig(CustomUserDetailsService userDetailsService,
                           AuthEntryPointJwt unauthorizedHandler,
@@ -59,23 +63,40 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/actuator/health",
-                                "/actuator/info",
+                .authorizeHttpRequests(auth -> {
+                    // Public authentication endpoints & health probes
+                    auth.requestMatchers(
+                            "/api/auth/**",
+                            "/actuator/health",
+                            "/actuator/info"
+                    ).permitAll();
+
+                    // Swagger / OpenAPI documentation endpoints (SEC-04)
+                    if (swaggerPublic) {
+                        auth.requestMatchers(
                                 "/v3/api-docs/**",
                                 "/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
-                        ).permitAll()
-                        // Admin restricted endpoints
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        // All other API endpoints require authentication
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll()
-                );
+                        ).permitAll();
+                    } else {
+                        auth.requestMatchers(
+                                "/v3/api-docs/**",
+                                "/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).hasRole("ADMIN");
+                    }
+
+                    // Administrative endpoints & sensitive actuator telemetry
+                    auth.requestMatchers("/api/admin/**", "/actuator/**").hasRole("ADMIN");
+
+                    // All business APIs require valid JWT authentication
+                    auth.requestMatchers("/api/**").authenticated();
+
+                    // Default fallback
+                    auth.anyRequest().permitAll();
+                });
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
@@ -83,4 +104,3 @@ public class SecurityConfig {
         return http.build();
     }
 }
-

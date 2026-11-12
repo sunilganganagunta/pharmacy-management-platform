@@ -123,7 +123,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>-XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
-                    <forkCount>0</forkCount>
                 </configuration>
             </plugin>
         </plugins>

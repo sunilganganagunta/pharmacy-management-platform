@@ -54,7 +54,8 @@ Traditional pharmacy and dispensary management suffers from severe operational b
 - **Customer Profiles:** Enrolled patients, loyalty purchase tracking, and contact directories.
 - **Executive Reports & CSV Export:** Filter sales by daily, weekly, monthly, or annual horizons; itemized inventory valuation; and one-click CSV file downloads.
 - **Alert Center:** Proactive notifications for low stock, lots expiring within 30 days, expired medicine quarantine, and purchase updates.
-- **Role-Based Access Control:** Separate permissions for `ADMIN` and `PHARMACIST` accounts.
+- **Role-Based Access Control (RBAC):** Three-tier permissions architecture enforcing least-privilege operations for `ADMIN`, `PHARMACIST`, and `CASHIER` accounts.
+- **Secure Password Reset:** Cryptographically secure, single-use, 15-minute expiring SHA-256 hashed token workflow (SEC-02) with anti-user enumeration protections.
 
 ---
 
@@ -404,19 +405,25 @@ The entire platform was tested live against `http://15.135.82.107` with 100% pas
 
 ---
 
-## 19. Operational & Engineering Documentation
+## 19. Operational & Engineering Documentation Suite
 
 Deep architectural specifications and operational runbooks are located in `docs/`:
 
-- [docs/SECURITY_AUDIT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/SECURITY_AUDIT.md) — Comprehensive security audit, RBAC analysis, BCrypt configuration, IMDSv2 enforcement, and credential rotation procedures.
-- [docs/DISASTER_RECOVERY_SOP.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/DISASTER_RECOVERY_SOP.md) — Automated `pg_dump` backups, OpenSSL AES-256-CBC encryption, 7-day retention, and verified isolated restoration procedures.
-- [docs/MONITORING_AND_LOGS.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/MONITORING_AND_LOGS.md) — Low-cost ($0.00) observability guide, Docker daemon log rotation, host monitoring script, and CloudWatch metrics.
-- [docs/HTTPS_SETUP_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/HTTPS_SETUP_GUIDE.md) — Production Let's Encrypt Certbot instructions, DNS A-record setup, and hardened Nginx TLS 1.3 configuration template.
-- [docs/ARCHITECTURE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/ARCHITECTURE.md) — Multi-tier SaaS architecture, database persistence, and network topology.
-- [docs/AWS_DEPLOYMENT_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/AWS_DEPLOYMENT_GUIDE.md) — Infrastructure provisioning, ECR repositories, and EC2 runtime configuration.
-- [docs/ER_DIAGRAM.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/ER_DIAGRAM.md) — Normalized PostgreSQL database schema with relationships and indexing strategy.
-- [docs/INTERVIEW_PREP.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/INTERVIEW_PREP.md) — Technical interview questions and answers across Java, Spring Boot, PostgreSQL, Docker, and AWS.
-- [docs/PRESENTATION_SLIDES.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/PRESENTATION_SLIDES.md) — 10-slide executive presentation deck for academic and internship evaluation.
+1. [docs/FINAL_COMPLETION_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/FINAL_COMPLETION_REPORT.md) — Master production-readiness evaluation report with evidence-based scoring (out of 10) across all 10 engineering disciplines.
+2. [docs/FINAL_COMPLETION_PLAN.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/FINAL_COMPLETION_PLAN.md) — Task-by-task execution roadmap and verification matrix.
+3. [docs/SECURITY_HARDENING_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/SECURITY_HARDENING_REPORT.md) — Root causes, code fixes, and automated test proof for SEC-01 through SEC-06.
+4. [docs/DATABASE_RELIABILITY_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/DATABASE_RELIABILITY_REPORT.md) — Flyway migration versioning (V1, V2, V3), check constraints, transaction atomicity, and connection pooling.
+5. [docs/FRONTEND_BACKEND_VALIDATION.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/FRONTEND_BACKEND_VALIDATION.md) — React 18 SPA architecture, role-based navigation filtering, two-step password reset, and Vite production bundling.
+6. [docs/CICD_IMPLEMENTATION_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/CICD_IMPLEMENTATION_REPORT.md) — GitHub Actions CI/CD workflows, reusable gating, AWS Systems Manager (SSM) deployment, and repository secret runbook.
+7. [docs/HTTPS_DEPLOYMENT_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/HTTPS_DEPLOYMENT_GUIDE.md) — Production Let's Encrypt Certbot instructions, DNS A-record setup, and hardened Nginx TLS 1.3 configuration template.
+8. [docs/S3_BACKUP_AND_DISASTER_RECOVERY.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/S3_BACKUP_AND_DISASTER_RECOVERY.md) — Automated `pg_dump` backups, OpenSSL AES-256-CBC encryption, Amazon S3 replication, Glacier Deep Archive lifecycle, and verified isolated restoration procedures.
+9. [docs/MONITORING_AND_ALERTING_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/MONITORING_AND_ALERTING_GUIDE.md) — Low-cost ($0.00) observability guide, Docker daemon log rotation (30MB cap), host monitoring script, and CloudWatch metrics.
+10. [docs/TESTING_AND_QA_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/TESTING_AND_QA_REPORT.md) — Four-tier testing strategy, 24 unit/integration tests (100% pass), and 17 live cloud E2E tests (100% pass).
+11. [docs/DOCKER_PRODUCTION_READINESS.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/DOCKER_PRODUCTION_READINESS.md) — Multi-stage Alpine Dockerfiles, non-root user execution, persistent volume guarantees, and port 8080 isolation.
+12. [docs/AWS_INFRASTRUCTURE_SECURITY_AUDIT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/AWS_INFRASTRUCTURE_SECURITY_AUDIT.md) — AWS Security Groups, least-privilege IAM instance profiles, IMDSv2 enforcement, and Free Tier cost management.
+13. [docs/PERFORMANCE_REVIEW.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/PERFORMANCE_REVIEW.md) — Database query optimization, HikariCP tuning, JVM ergonomics (G1GC), 2.0 GB swap buffering, and Vite asset compression.
+14. [docs/ENTERPRISE_ARCHITECTURE_ROADMAP.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/ENTERPRISE_ARCHITECTURE_ROADMAP.md) — Level 10 enterprise future roadmap covering Multi-AZ VPC, ALB, WAF, ECS Fargate auto scaling, RDS Multi-AZ, and cost analysis.
+15. [docs/PROJECT_ARCHITECTURE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/PROJECT_ARCHITECTURE.md) — Multi-tier SaaS architecture, database persistence, and network topology.
 
 ---
 

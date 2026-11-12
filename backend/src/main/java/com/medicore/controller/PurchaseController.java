@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/purchases")
+@PreAuthorize("hasAnyRole('ADMIN', 'PHARMACIST')")
 @Tag(name = "Purchases", description = "Purchase order generation, supplier procurement, and inventory receiving")
 public class PurchaseController {
 

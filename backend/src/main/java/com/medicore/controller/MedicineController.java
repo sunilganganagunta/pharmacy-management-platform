@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -82,6 +83,7 @@ public class MedicineController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'PHARMACIST')")
     @Operation(summary = "Add a new medicine")
     public ResponseEntity<ApiResponse<MedicineDto>> createMedicine(@Valid @RequestBody MedicineDto dto) {
         MedicineDto created = medicineService.createMedicine(dto);
@@ -89,6 +91,7 @@ public class MedicineController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PHARMACIST')")
     @Operation(summary = "Update an existing medicine")
     public ResponseEntity<ApiResponse<MedicineDto>> updateMedicine(@PathVariable Long id,
                                                                    @Valid @RequestBody MedicineDto dto) {
@@ -97,6 +100,7 @@ public class MedicineController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete (deactivate) a medicine")
     public ResponseEntity<ApiResponse<Void>> deleteMedicine(@PathVariable Long id) {
         medicineService.deleteMedicine(id);

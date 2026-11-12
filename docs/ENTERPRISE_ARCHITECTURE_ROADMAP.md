@@ -224,3 +224,4 @@ timeline
    - Activate AWS IAM OIDC for GitHub Actions.
    - Migrate application credentials to AWS Secrets Manager.
    - Attach AWS WAF to ALB and execute production cutover.
+

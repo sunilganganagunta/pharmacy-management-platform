@@ -18,17 +18,20 @@ import {
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, isAdmin } = useAuth();
 
-  const navItems = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'POS & Billing', path: '/pos', icon: ShoppingCart },
-    { name: 'Medicines', path: '/medicines', icon: Pill },
-    { name: 'Inventory', path: '/inventory', icon: Package },
-    { name: 'Purchase Orders', path: '/purchases', icon: Truck },
-    { name: 'Suppliers', path: '/suppliers', icon: Building2 },
-    { name: 'Customers', path: '/customers', icon: Users },
-    { name: 'Reports & Analytics', path: '/reports', icon: BarChart3 },
-    { name: 'Alert Center', path: '/notifications', icon: Bell },
+  const allNavItems = [
+    { name: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['ADMIN', 'PHARMACIST', 'CASHIER'] },
+    { name: 'POS & Billing', path: '/pos', icon: ShoppingCart, roles: ['ADMIN', 'PHARMACIST', 'CASHIER'] },
+    { name: 'Medicines', path: '/medicines', icon: Pill, roles: ['ADMIN', 'PHARMACIST', 'CASHIER'] },
+    { name: 'Inventory', path: '/inventory', icon: Package, roles: ['ADMIN', 'PHARMACIST'] },
+    { name: 'Purchase Orders', path: '/purchases', icon: Truck, roles: ['ADMIN', 'PHARMACIST'] },
+    { name: 'Suppliers', path: '/suppliers', icon: Building2, roles: ['ADMIN', 'PHARMACIST'] },
+    { name: 'Customers', path: '/customers', icon: Users, roles: ['ADMIN', 'PHARMACIST', 'CASHIER'] },
+    { name: 'Reports & Analytics', path: '/reports', icon: BarChart3, roles: ['ADMIN', 'PHARMACIST'] },
+    { name: 'Alert Center', path: '/notifications', icon: Bell, roles: ['ADMIN', 'PHARMACIST', 'CASHIER'] },
   ];
+
+  const userRole = user?.role || 'PHARMACIST';
+  const navItems = allNavItems.filter((item) => item.roles.includes(userRole));
 
   return (
     <>

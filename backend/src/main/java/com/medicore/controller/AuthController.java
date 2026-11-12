@@ -37,9 +37,16 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    @Operation(summary = "Reset password with email verification")
-    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        authService.resetPassword(request);
+    @Operation(summary = "Request password reset token (generic response prevents user enumeration)")
+    public ResponseEntity<ApiResponse<String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        String message = authService.initiatePasswordReset(request);
+        return ResponseEntity.ok(ApiResponse.success(message, message));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Confirm password reset using single-use secure token")
+    public ResponseEntity<ApiResponse<Void>> resetPasswordConfirm(@Valid @RequestBody ResetPasswordConfirmRequest request) {
+        authService.confirmPasswordReset(request);
         return ResponseEntity.ok(ApiResponse.success("Password has been reset successfully. You can now login with your new credentials.", null));
     }
 

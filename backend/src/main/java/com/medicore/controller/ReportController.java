@@ -8,12 +8,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/reports")
+@PreAuthorize("hasAnyRole('ADMIN', 'PHARMACIST')")
 @Tag(name = "Reports & Analytics", description = "Periodic sales reports, inventory valuations, and CSV exports")
 public class ReportController {
 

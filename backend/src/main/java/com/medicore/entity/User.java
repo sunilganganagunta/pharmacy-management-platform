@@ -9,7 +9,8 @@ public class User {
 
     public enum Role {
         ADMIN,
-        PHARMACIST
+        PHARMACIST,
+        CASHIER
     }
 
     @Id
