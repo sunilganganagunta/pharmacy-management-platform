@@ -41,3 +41,4 @@ done
 echo "OK"
 
 echo "All MediCore services are healthy and operational!"
+

@@ -149,3 +149,4 @@ When demonstrating to your internship evaluator, follow this structured 5-step w
    - Show CD building Docker images and publishing to Amazon ECR.
    - Show CD deploying over SSH to EC2 and running health checks.
    - Refresh the live website and show the updated banner heading without any manual server intervention!
+

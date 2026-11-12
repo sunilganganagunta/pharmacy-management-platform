@@ -260,3 +260,4 @@ cd ~/medicore-app
 bash ./scripts/rollback.sh
 ```
 This script automatically restores the previously verified Docker image tag from `previous_version.txt` and restarts the services.
+

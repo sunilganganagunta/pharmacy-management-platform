@@ -184,3 +184,4 @@ erDiagram
    - `V1__init_schema.sql`: Strictly typed schema definition with proper relational constraints.
    - `V2__seed_initial_data.sql`: Dynamic seed data utilizing `CURRENT_DATE` so live alert badges, low stock warnings, and expiring lot trackers are always active during live evaluation.
 3. **Transaction Isolation**: Service methods handling sales and PO receiving are decorated with `@Transactional`, guaranteeing ACID compliance across stock decrements and invoice creation.
+

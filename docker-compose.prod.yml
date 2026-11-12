@@ -73,3 +73,4 @@ services:
 networks:
   medicore-prod-net:
     driver: bridge
+

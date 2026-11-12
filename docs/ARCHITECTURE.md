@@ -158,3 +158,4 @@ sequenceDiagram
 1. **Frontend Container**: Exposed on Port 80 (and 443 with SSL). Serves pre-compiled Vite production static bundles, applies gzip compression, and reverse proxies `/api/*` to the backend container over internal Docker DNS (`http://backend:8080`).
 2. **Backend Container**: Listens on Port 8080 internally. Communicates with PostgreSQL on port 5432. Runs health checks via Spring Boot Actuator (`/actuator/health`).
 3. **Database Container**: Isolated inside `medicore-net` bridge network. Port 5432 is not exposed to the public Internet for maximum security. Data is persisted to a Docker volume or host directory.
+

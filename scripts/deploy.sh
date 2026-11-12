@@ -36,3 +36,4 @@ bash ./scripts/health-check.sh
 echo "=========================================="
 echo " MediCore Deployment Successful!"
 echo "=========================================="
+

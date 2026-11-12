@@ -108,3 +108,4 @@
   - Multi-branch pharmacy tenancy with warehouse inter-store transfers.
   - AI-driven predictive reordering based on historical seasonal sickness trends.
   - Kubernetes (EKS) migration with Horizontal Pod Autoscaler (HPA).
+

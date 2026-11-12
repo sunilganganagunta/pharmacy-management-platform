@@ -30,3 +30,4 @@ echo "Running health checks on rolled-back release..."
 bash ./scripts/health-check.sh
 
 echo "Rollback to version $PREV_TAG completed successfully."
+
