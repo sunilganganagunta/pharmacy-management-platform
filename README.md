@@ -367,18 +367,55 @@ mvn test
 
 ---
 
-## 18. Live Website Demonstration
+## 18. Verified Live Production Deployment
 
-- **Live SaaS Public URL:** `http://<your-ec2-ip>` (or your custom domain)
-- **Swagger API Docs:** `http://<your-ec2-ip>:8080/swagger-ui.html`
-- **Actuator Health:** `http://<your-ec2-ip>:8080/actuator/health`
+MediCore is actively deployed on AWS in **ap-southeast-2 (Sydney)**:
+
+| Service / Interface | Public Production URL | Security Status |
+| :--- | :--- | :--- |
+| **MediCore Web Application (SPA)** | [http://15.135.82.107/](http://15.135.82.107/) | **HTTP 200 - Live (Nginx Reverse Proxy)** |
+| **Spring Boot Actuator Health** | [http://15.135.82.107/actuator/health](http://15.135.82.107/actuator/health) | **HTTP 200 - Status: UP (Postgres & Disk OK)** |
+| **OpenAPI / Swagger UI Docs** | [http://15.135.82.107/swagger-ui/index.html](http://15.135.82.107/swagger-ui/index.html) | **HTTP 200 - Full Interactive API Specs** |
+| **Backend REST API Root** | [http://15.135.82.107/api/](http://15.135.82.107/api/) | **JWT Bearer Authenticated / Port 8080 Shielded** |
+
+### Verified Live End-to-End Business Workflow Test Suite
+The entire platform was tested live against `http://15.135.82.107` with 100% pass rate:
+
+| Category | Test Case | Expected HTTP | Actual HTTP | Result | Verification Notes |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **Infrastructure** | Actuator Liveness & DB Ping | 200 | 200 | **PASSED** | PostgreSQL connection UP, disk space verified |
+| **Authentication** | Valid Admin Login | 200 | 200 | **PASSED** | Returns JWT Bearer token, Role: ADMIN |
+| **Authentication** | Valid Pharmacist Login | 200 | 200 | **PASSED** | Returns JWT Bearer token, Role: PHARMACIST |
+| **Authentication** | Invalid Password Attempt | 401 | 401 | **PASSED** | Generic error returned, zero username enumeration |
+| **Security** | Reject Unauthenticated API Call | 401 | 401 | **PASSED** | Spring Security filter blocks unauthorized requests |
+| **Dashboard** | Retrieve Dashboard Statistics | 200 | 200 | **PASSED** | 18 medicines, 5 suppliers, charts & alert streams |
+| **Medicines** | Medicine Search by Name | 200 | 200 | **PASSED** | Returns matching items with pagination metadata |
+| **Medicines** | Barcode Lookup (`890103001015`) | 200 | 200 | **PASSED** | Resolves Amoxil 250mg Suspension instantly |
+| **Medicines** | Create Medicine Record (POST) | 200 | 200 | **PASSED** | Persisted to PostgreSQL, generated sequential ID |
+| **Medicines** | Update Medicine Record (PUT) | 200 | 200 | **PASSED** | Updated selling price to 130.00 |
+| **Suppliers** | List Active Suppliers | 200 | 200 | **PASSED** | Returns 5 registered pharmaceutical vendors |
+| **POS & Sales** | Insufficient Stock Handled | 409 | 409 | **PASSED** | Prevents overselling beyond available inventory |
+| **POS & Sales** | Process Sale Transaction | 200 | 200 | **PASSED** | Generated tax invoice, deducted inventory stock |
+| **Reports** | Export Sales CSV Report | 200 | 200 | **PASSED** | Streamed `text/csv` with invoice breakdown |
+| **Reports** | Export Inventory CSV Report | 200 | 200 | **PASSED** | Streamed `text/csv` with stock valuation |
+| **Notifications** | Fetch Unread Notification Count | 200 | 200 | **PASSED** | Unread notifications returned |
+| **Medicines** | Delete Medicine Record (DELETE) | 200 | 200 | **PASSED** | Soft deletion / cleanup validated |
 
 ---
 
-## 19. Technical Interview Preparation
-A complete 10-slide presentation deck and technical interview questions/answers covering system architecture, Docker, CI/CD, and AWS security are provided in:
-- [PRESENTATION_SLIDES.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/PRESENTATION_SLIDES.md)
-- [INTERVIEW_PREP.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/INTERVIEW_PREP.md)
+## 19. Operational & Engineering Documentation
+
+Deep architectural specifications and operational runbooks are located in `docs/`:
+
+- [docs/SECURITY_AUDIT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/SECURITY_AUDIT.md) — Comprehensive security audit, RBAC analysis, BCrypt configuration, IMDSv2 enforcement, and credential rotation procedures.
+- [docs/DISASTER_RECOVERY_SOP.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/DISASTER_RECOVERY_SOP.md) — Automated `pg_dump` backups, OpenSSL AES-256-CBC encryption, 7-day retention, and verified isolated restoration procedures.
+- [docs/MONITORING_AND_LOGS.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/MONITORING_AND_LOGS.md) — Low-cost ($0.00) observability guide, Docker daemon log rotation, host monitoring script, and CloudWatch metrics.
+- [docs/HTTPS_SETUP_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/HTTPS_SETUP_GUIDE.md) — Production Let's Encrypt Certbot instructions, DNS A-record setup, and hardened Nginx TLS 1.3 configuration template.
+- [docs/ARCHITECTURE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/ARCHITECTURE.md) — Multi-tier SaaS architecture, database persistence, and network topology.
+- [docs/AWS_DEPLOYMENT_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/AWS_DEPLOYMENT_GUIDE.md) — Infrastructure provisioning, ECR repositories, and EC2 runtime configuration.
+- [docs/ER_DIAGRAM.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/ER_DIAGRAM.md) — Normalized PostgreSQL database schema with relationships and indexing strategy.
+- [docs/INTERVIEW_PREP.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/INTERVIEW_PREP.md) — Technical interview questions and answers across Java, Spring Boot, PostgreSQL, Docker, and AWS.
+- [docs/PRESENTATION_SLIDES.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/PRESENTATION_SLIDES.md) — 10-slide executive presentation deck for academic and internship evaluation.
 
 ---
 

@@ -11,8 +11,8 @@ flowchart TD
     DNS["DNS / Route 53 (medicore.yourdomain.com)"] --> IGW["AWS Internet Gateway"]
     IGW --> SG["AWS Security Group (Ports 80, 443, 22-restricted)"]
     
-    subgraph VPC ["Default / Custom VPC (ap-south-1)"]
-        SG --> EC2["Amazon EC2 Instance (t3.medium / Ubuntu)"]
+    subgraph VPC ["Default / Custom VPC (ap-southeast-2 - Sydney)"]
+        SG --> EC2["Amazon EC2 Instance (t3.micro / Ubuntu 24.04 LTS)"]
         
         subgraph EC2Host ["Docker Compose Runtime Environment"]
             NginxContainer["Frontend / Nginx Reverse Proxy Container (:80 / :443)"]
@@ -26,7 +26,7 @@ flowchart TD
 
     subgraph AWSServices ["AWS Managed Services"]
         ECR["Amazon ECR (medicore-backend & medicore-frontend)"]
-        IAM["AWS IAM Role (EC2 ECR Read-Only Profile)"]
+        IAM["AWS IAM Role (medicore-ec2-role / medicore-ec2-profile)"]
         CloudWatch["AWS CloudWatch Logs & Metrics"]
     end
 
@@ -42,7 +42,7 @@ Create two private Amazon ECR repositories to store versioned Docker images:
 
 ```bash
 # 1. Set your AWS Region
-export AWS_REGION="ap-south-1"
+export AWS_REGION="ap-southeast-2"
 
 # 2. Create Backend ECR Repository
 aws ecr create-repository \
