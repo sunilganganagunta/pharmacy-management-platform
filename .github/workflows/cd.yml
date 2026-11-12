@@ -1,0 +1,168 @@
+name: MediCore Continuous Deployment (CD) - AWS ECR & EC2
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # For AWS OIDC authentication
+
+jobs:
+  # ========================================================
+  # Continuous Integration Gate
+  # ========================================================
+  ci-gate:
+    name: Verify Continuous Integration
+    uses: ./.github/workflows/ci.yml
+
+  # ========================================================
+  # Build and Publish Docker Images to Amazon ECR
+  # ========================================================
+  build-and-push-ecr:
+    name: Build & Push Images to Amazon ECR
+    needs: ci-gate
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.vars.outputs.sha_short }}
+
+    steps:
+      - name: 1. Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: 2. Set Short Git Commit SHA Output
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: 3. Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'ap-south-1' }}
+
+      - name: 4. Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 5. Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # --- Build & Push Backend Image ---
+      - name: 6. Build and Push Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/medicore-backend:${{ steps.vars.outputs.sha_short }}
+            ${{ steps.login-ecr.outputs.registry }}/medicore-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # --- Build & Push Frontend Image ---
+      - name: 7. Build and Push Frontend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/medicore-frontend:${{ steps.vars.outputs.sha_short }}
+            ${{ steps.login-ecr.outputs.registry }}/medicore-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ========================================================
+  # Automated Zero-Downtime Deployment to AWS EC2
+  # ========================================================
+  deploy-to-ec2:
+    name: Deploy to Amazon EC2
+    needs: [build-and-push-ecr]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Checkout Deployment Scripts & Compose Config
+        uses: actions/checkout@v4
+
+      - name: 2. Deploy to EC2 via Secure SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+          IMAGE_TAG: ${{ needs.build-and-push-ecr.outputs.image_tag }}
+          AWS_REGION: ${{ secrets.AWS_REGION || 'ap-south-1' }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: ECR_REGISTRY,IMAGE_TAG,AWS_REGION,POSTGRES_PASSWORD,JWT_SECRET
+          script: |
+            set -e
+            echo "=== MediCore Automated Cloud Deployment Starting ==="
+            echo "Deploying Version Tag: $IMAGE_TAG"
+
+            # 1. Ensure application directory exists
+            mkdir -p ~/medicore-app
+            cd ~/medicore-app
+
+            # 2. Authenticate EC2 Docker with Amazon ECR
+            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+            # 3. Export environment variables for Docker Compose
+            cat <<EOF > .env
+            ECR_REGISTRY=$ECR_REGISTRY
+            IMAGE_TAG=$IMAGE_TAG
+            POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            JWT_SECRET=$JWT_SECRET
+            POSTGRES_DB=medicoredb
+            POSTGRES_USER=medicore_user
+            EOF
+
+            # 4. Pull new immutable images from Amazon ECR
+            docker pull $ECR_REGISTRY/medicore-backend:$IMAGE_TAG
+            docker pull $ECR_REGISTRY/medicore-frontend:$IMAGE_TAG
+
+            # 5. Backup previous running version tag for instant rollback
+            if [ -f current_version.txt ]; then
+              cp current_version.txt previous_version.txt
+            fi
+            echo "$IMAGE_TAG" > current_version.txt
+
+            # 6. Apply updated services using production Docker Compose
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # 7. Execute Automated Health Checks
+            echo "Waiting for services to initialize..."
+            sleep 25
+
+            # Health Check 1: Spring Boot Actuator
+            echo "Checking Backend health..."
+            if curl -f http://localhost:8080/actuator/health; then
+              echo "Backend is HEALTHY."
+            else
+              echo "Backend health check failed! Initiating automated rollback..."
+              if [ -f previous_version.txt ]; then
+                PREV_TAG=\$(cat previous_version.txt)
+                echo "Rolling back to previous version: \$PREV_TAG"
+                sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=\$PREV_TAG/" .env
+                docker compose -f docker-compose.prod.yml up -d
+              fi
+              exit 1
+            fi
+
+            # Health Check 2: Nginx Web Server & Frontend SPA
+            echo "Checking Frontend health..."
+            if curl -f http://localhost:80/; then
+              echo "Frontend is HEALTHY."
+            else
+              echo "Frontend health check failed!"
+              exit 1
+            fi
+
+            # 8. Clean up unused older images to preserve EC2 disk space
+            docker image prune -af --filter "until=48h" || true
+
+            echo "=== MediCore Deployment Successfully Completed ==="
