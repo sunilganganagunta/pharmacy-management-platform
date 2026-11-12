@@ -320,18 +320,19 @@ flowchart LR
     CI -->|"On Success"| CD["GitHub Actions CD Pipeline"]
     
     subgraph CD Pipeline ["Continuous Deployment (cd.yml)"]
+        Auth["Authenticate (OIDC or Scoped Keys)"]
         DockerBuild["Build Multi-Stage Docker Images"]
         Tag["Tag with Git Commit SHA"]
         PushECR["Push Images to Amazon ECR"]
-        SSH["SSH into AWS EC2"]
+        SSM["AWS Systems Manager (Zero Open SSH Ports)"]
         Pull["Pull Images & Docker Compose Up"]
         Health["Actuator & Nginx Health Checks"]
         
-        DockerBuild --> Tag --> PushECR --> SSH --> Pull --> Health
+        Auth --> DockerBuild --> Tag --> PushECR --> SSM --> Pull --> Health
     end
 
-    Health -->|"All Checks Pass"| Live["Live Public SaaS Platform"]
-    Health -.->|"Failure Detected"| Rollback["Automated Rollback to Previous Tag"]
+    Health -->|"All Checks Pass"| Live["Live Public SaaS Platform (15.135.82.107)"]
+    Health -.->|"Failure Detected"| Rollback["Automated Rollback to Previous Version"]
 ```
 
 For complete step-by-step AWS credentials and deployment configuration, see [AWS_DEPLOYMENT_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/AWS_DEPLOYMENT_GUIDE.md).

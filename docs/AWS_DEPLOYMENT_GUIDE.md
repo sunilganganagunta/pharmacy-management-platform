@@ -185,23 +185,162 @@ Mount `/etc/letsencrypt` into the frontend container as configured in `docker-co
 
 ---
 
-## 7. Step 6: GitHub Repository Secrets Configuration
+## 7. Step 6: GitHub Actions CI/CD Pipeline & AWS Authentication
 
-In your GitHub repository under **Settings &rarr; Secrets and variables &rarr; Actions**, configure the following production secrets:
+MediCore utilizes a dual-path continuous deployment pipeline (`.github/workflows/cd.yml`) that supports both modern **AWS OIDC Federation (Zero Static Keys)** and **Scoped IAM Service Credentials**, deploying to EC2 via **AWS Systems Manager (Zero Open SSH Ports)**.
 
-| Secret Name | Example Value | Description |
-|-------------|---------------|-------------|
-| `AWS_ACCESS_KEY_ID` | `AKIAIOSFODNN7EXAMPLE` | CI/CD Deployment AWS Access Key |
-| `AWS_SECRET_ACCESS_KEY` | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` | CI/CD Deployment AWS Secret Key |
-| `AWS_REGION` | `ap-south-1` | Target AWS Region |
-| `ECR_REGISTRY` | `123456789012.dkr.ecr.ap-south-1.amazonaws.com` | ECR Registry URI |
-| `EC2_HOST` | `13.232.xxx.xxx` | Public IP or DNS of EC2 instance |
-| `EC2_USER` | `ubuntu` | SSH user |
-| `EC2_SSH_KEY` | `-----BEGIN RSA PRIVATE KEY-----...` | Private key for EC2 deployment |
-| `POSTGRES_PASSWORD` | `MediCoreStrongProdPassword2026!` | Production DB password |
-| `JWT_SECRET` | `404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970` | 256-bit JWT encryption secret |
+### 7.1 Method A: AWS OpenID Connect (OIDC) Federation (Recommended)
+
+GitHub Actions authenticates to AWS without storing long-lived access keys by exchanging a cryptographically signed OIDC web identity token.
+
+#### Workflow Permissions Configured in `cd.yml`:
+```yaml
+permissions:
+  contents: read
+  id-token: write # Generates OIDC web identity token for AWS STS
+```
+
+#### Required IAM OIDC Provider:
+- **Provider URL**: `https://token.actions.githubusercontent.com`
+- **Audience**: `sts.amazonaws.com`
+
+#### IAM Role Trust Policy (`medicore-github-actions-role`):
+Restricted strictly to this exact GitHub repository and the `main` branch:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::774697186763:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+        },
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:sunilganganagunta/pharmacy-management-platform:ref:refs/heads/main"
+        }
+      }
+    }
+  ]
+}
+```
+
+> [!NOTE]
+> **AWS Organizations SCP Status & Activation:**  
+> On accounts enrolled in the New AWS Experience, the managed Service Control Policy (`p-sqnofg6g`) explicitly restricts `iam:CreateOpenIDConnectProvider`. To enable OIDC:
+> 1. Log into [AWS Settings](https://settings.aws.com/).
+> 2. Navigate to **Account & IAM Settings**.
+> 3. Click **Activate Advanced IAM Capabilities** (or upgrade to standard IAM management).
+> 4. In the AWS IAM Console, go to **Identity Providers** &rarr; **Add Provider** &rarr; **OpenID Connect** (`https://token.actions.githubusercontent.com`, Audience: `sts.amazonaws.com`).
+> 5. Create the role with the trust policy above and attach `medicore-cicd-policy`.
+> 6. Add secret `AWS_ROLE_TO_ASSUME` in GitHub Repository Settings.
 
 ---
+
+### 7.2 Method B: Scoped IAM Service Credentials (Immediate Alternative)
+
+If OIDC provider creation is restricted by your project's SCP, create a dedicated programmatic IAM service user (`medicore-github-actions`) with least-privilege permissions:
+
+#### Least-Privilege IAM Policy (`medicore-cicd-policy`):
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ECRAuth",
+      "Effect": "Allow",
+      "Action": "ecr:GetAuthorizationToken",
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECRImagePush",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "ecr:PutImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload"
+      ],
+      "Resource": [
+        "arn:aws:ecr:ap-southeast-2:774697186763:repository/medicore-backend",
+        "arn:aws:ecr:ap-southeast-2:774697186763:repository/medicore-frontend"
+      ]
+    },
+    {
+      "Sid": "SSMDeployment",
+      "Effect": "Allow",
+      "Action": "ssm:SendCommand",
+      "Resource": [
+        "arn:aws:ec2:ap-southeast-2:774697186763:instance/i-0be536c99a4381e25",
+        "arn:aws:ssm:ap-southeast-2::document/AWS-RunShellScript"
+      ]
+    },
+    {
+      "Sid": "SSMStatusQuery",
+      "Effect": "Allow",
+      "Action": "ssm:GetCommandInvocation",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+---
+
+### 7.3 GitHub Repository Secrets Configuration
+
+Navigate to GitHub: **Settings &rarr; Secrets and variables &rarr; Actions** and add the following repository secrets:
+
+| Secret Name | Value | Purpose |
+| :--- | :--- | :--- |
+| `AWS_ROLE_TO_ASSUME` | `arn:aws:iam::774697186763:role/medicore-github-actions-role` | *(Optional)* For OIDC passwordless federation |
+| `AWS_ACCESS_KEY_ID` | `AKIA...` (from IAM user) | AWS Access Key (if not using OIDC) |
+| `AWS_SECRET_ACCESS_KEY` | `wJalr...` (from IAM user) | AWS Secret Key (if not using OIDC) |
+| `AWS_REGION` | `ap-southeast-2` | Primary AWS Deployment Region |
+| `ECR_REGISTRY` | `774697186763.dkr.ecr.ap-southeast-2.amazonaws.com` | ECR Registry URI |
+| `EC2_INSTANCE_ID` | `i-0be536c99a4381e25` | Production EC2 Instance ID |
+| `POSTGRES_PASSWORD` | `<your-production-db-password>` | Production Database Password |
+| `JWT_SECRET` | `<your-production-jwt-secret>` | Production JWT Signing Key |
+
+*(Note: `EC2_SSH_KEY` is completely optional. The workflow defaults to AWS Systems Manager deployment, meaning SSH port 22 remains restricted to your IP).*
+
+---
+
+### 7.4 Zero-Open-Port AWS SSM Deployment Flow
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant GH as GitHub Actions (cd.yml)
+    participant ECR as Amazon ECR
+    participant SSM as AWS Systems Manager
+    participant EC2 as Amazon EC2 (i-0be536c99a4381e25)
+
+    Dev->>GH: git push origin main
+    GH->>GH: Execute ci-gate (Unit tests & builds)
+    GH->>ECR: Build & push immutable image (:SHA)
+    GH->>SSM: Send-Command (Deploy script)
+    SSM->>EC2: Execute deployment over outbound agent
+    EC2->>ECR: Pull image (:SHA)
+    EC2->>EC2: Preserve .env & Postgres volume
+    EC2->>EC2: docker compose up -d
+    EC2->>EC2: Probe /actuator/health & Nginx
+    alt Health Check Passes
+        EC2-->>SSM: Report Success
+        SSM-->>GH: Status: Success (200 OK)
+    else Health Check Fails
+        EC2->>EC2: Auto-rollback to previous_version.txt
+        EC2-->>SSM: Report Rollback & Exit 1
+        SSM-->>GH: Status: Failed (Alert triggered)
+    end
+```
 
 ## 8. Step 7: Application Monitoring & AWS CloudWatch
 

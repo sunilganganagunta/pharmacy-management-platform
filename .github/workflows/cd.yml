@@ -38,6 +38,7 @@ jobs:
       - name: 3. Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'ap-southeast-2' }}
@@ -91,6 +92,7 @@ jobs:
       - name: 2. Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'ap-southeast-2' }}
@@ -117,7 +119,20 @@ jobs:
 
           aws ecr get-login-password --region __AWS_REGION__ | docker login --username AWS --password-stdin __ECR_REGISTRY__
 
-          cat << 'ENVFILE' > .env
+          # Safely update or initialize production .env without wiping existing secrets
+          if [ -f .env ]; then
+            echo "Existing production .env found. Preserving active secrets..."
+            sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=__IMAGE_TAG__|" .env
+            sed -i "s|^ECR_REGISTRY=.*|ECR_REGISTRY=__ECR_REGISTRY__|" .env
+            if [ -n "__POSTGRES_PASSWORD__" ]; then
+              sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=__POSTGRES_PASSWORD__|" .env
+            fi
+            if [ -n "__JWT_SECRET__" ]; then
+              sed -i "s|^JWT_SECRET=.*|JWT_SECRET=__JWT_SECRET__|" .env
+            fi
+          else
+            echo "Initializing production .env..."
+            cat << 'ENVFILE' > .env
           ECR_REGISTRY=__ECR_REGISTRY__
           IMAGE_TAG=__IMAGE_TAG__
           POSTGRES_PASSWORD=__POSTGRES_PASSWORD__
@@ -125,7 +140,8 @@ jobs:
           POSTGRES_DB=medicoredb
           POSTGRES_USER=medicore_user
           ENVFILE
-          chmod 600 .env
+            chmod 600 .env
+          fi
 
           docker pull __ECR_REGISTRY__/medicore-backend:__IMAGE_TAG__
           docker pull __ECR_REGISTRY__/medicore-frontend:__IMAGE_TAG__
@@ -241,8 +257,20 @@ jobs:
             # 2. Authenticate EC2 Docker with Amazon ECR
             aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-            # 3. Export environment variables for Docker Compose
-            cat <<EOF > .env
+            # 3. Export environment variables for Docker Compose safely
+            if [ -f .env ]; then
+              echo "Existing production .env found. Preserving active secrets..."
+              sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$IMAGE_TAG|" .env
+              sed -i "s|^ECR_REGISTRY=.*|ECR_REGISTRY=$ECR_REGISTRY|" .env
+              if [ -n "$POSTGRES_PASSWORD" ]; then
+                sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$POSTGRES_PASSWORD|" .env
+              fi
+              if [ -n "$JWT_SECRET" ]; then
+                sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$JWT_SECRET|" .env
+              fi
+            else
+              echo "Initializing production .env..."
+              cat <<EOF > .env
             ECR_REGISTRY=$ECR_REGISTRY
             IMAGE_TAG=$IMAGE_TAG
             POSTGRES_PASSWORD=$POSTGRES_PASSWORD
@@ -250,7 +278,8 @@ jobs:
             POSTGRES_DB=medicoredb
             POSTGRES_USER=medicore_user
             EOF
-            chmod 600 .env
+              chmod 600 .env
+            fi
 
             # 4. Pull new immutable images from Amazon ECR
             docker pull $ECR_REGISTRY/medicore-backend:$IMAGE_TAG

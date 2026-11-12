@@ -69,3 +69,41 @@ Output checkpoints:
 2. **EC2 Status Check Failed Alarm**:
    - Metric: `AWS/EC2 StatusCheckFailed_Instance > 0`.
    - Action: Automated Instance Reboot / Recovery.
+
+---
+
+## 5. Deployment Audit Trail & Logs (AWS Systems Manager & GitHub Actions)
+
+Every deployment dispatched by GitHub Actions or run manually leaves an immutable audit trail in AWS Systems Manager.
+
+### Inspect Past Deployment Executions
+```bash
+aws ssm list-commands \
+  --instance-id i-0be536c99a4381e25 \
+  --region ap-southeast-2 \
+  --query "Commands[*].[CommandId,DocumentName,Status,RequestedDateTime,Comment]" \
+  --output table
+```
+
+### View Standard Output from Deployment
+```bash
+aws ssm get-command-invocation \
+  --command-id <COMMAND_ID> \
+  --instance-id i-0be536c99a4381e25 \
+  --region ap-southeast-2 \
+  --query "StandardOutputContent" \
+  --output text
+```
+
+### View Application Logs on EC2
+```bash
+# Backend logs
+docker logs --tail 100 -f medicore-prod-backend
+
+# Nginx reverse proxy logs
+docker logs --tail 100 -f medicore-prod-frontend
+
+# PostgreSQL logs
+docker logs --tail 100 -f medicore-prod-postgres
+```
+

@@ -157,5 +157,56 @@ sequenceDiagram
 
 1. **Frontend Container**: Exposed on Port 80 (and 443 with SSL). Serves pre-compiled Vite production static bundles, applies gzip compression, and reverse proxies `/api/*` to the backend container over internal Docker DNS (`http://backend:8080`).
 2. **Backend Container**: Listens on Port 8080 internally. Communicates with PostgreSQL on port 5432. Runs health checks via Spring Boot Actuator (`/actuator/health`).
-3. **Database Container**: Isolated inside `medicore-net` bridge network. Port 5432 is not exposed to the public Internet for maximum security. Data is persisted to a Docker volume or host directory.
+3. **Database Container**: Isolated inside `medicore-prod-net` bridge network. Port 5432 is not exposed to the public Internet for maximum security. Data is persisted to host directory `/var/lib/medicore/pgdata`.
+
+---
+
+## 5. Automated CI/CD & Deployment Architecture
+
+```mermaid
+flowchart TD
+    GitPush["git push origin main"] --> CIGate["GitHub Actions: ci-gate"]
+    
+    subgraph CI ["Continuous Integration (ci.yml)"]
+        BackendTest["Backend CI: JDK 21 / Maven test"]
+        FrontendBuild["Frontend CI: Node 22 / Vite build"]
+    end
+    
+    CIGate --> BackendTest
+    CIGate --> FrontendBuild
+    
+    BackendTest & FrontendBuild --> ECRJob["Job: build-and-push-ecr"]
+    
+    subgraph ECR ["Amazon ECR Publish"]
+        OIDCAuth["Authenticate to AWS (OIDC or IAM Credentials)"]
+        BuildBackend["Build medicore-backend:SHA"]
+        BuildFrontend["Build medicore-frontend:SHA"]
+        PushBackend["Push to ECR: backend:SHA & :latest"]
+        PushFrontend["Push to ECR: frontend:SHA & :latest"]
+    end
+    
+    ECRJob --> OIDCAuth --> BuildBackend & BuildFrontend --> PushBackend & PushFrontend
+    
+    PushBackend & PushFrontend --> DeployJob["Job: deploy-to-ec2"]
+    
+    subgraph SSMDeploy ["AWS Systems Manager Deployment (Zero Open SSH Ports)"]
+        SSMDispatch["aws ssm send-command to i-0be536c99a4381e25"]
+        EC2Pull["EC2 pulls immutable SHA-tagged images"]
+        EnvPreserve["Preserve existing production .env & Postgres data volume"]
+        ComposeUp["docker compose up -d (backend & frontend)"]
+        HealthProbe["Probe /actuator/health and http://localhost:80/"]
+        AutoRollback["If health check fails: Revert to previous_version.txt tag"]
+    end
+    
+    DeployJob --> SSMDispatch --> EC2Pull --> EnvPreserve --> ComposeUp --> HealthProbe
+    HealthProbe -->|"Healthy (200 OK)"| LiveDeployment["Production Active (15.135.82.107)"]
+    HealthProbe -.->|"Failed"| AutoRollback
+```
+
+### Key Architectural Strengths
+1. **Zero Open SSH Ports**: Deployment executes over AWS Systems Manager (SSM) agent's outbound secure channel. Port 22 is never exposed to dynamic GitHub runner IP addresses.
+2. **Secrets Protection**: Existing production database passwords and JWT secrets on the EC2 host are preserved across updates, preventing configuration drift or accidental overwrites.
+3. **Immutable Tagging**: Images are pinned to their short Git commit SHA, preventing tag collision and enabling instantaneous rollback to `previous_version.txt`.
+4. **Data Durability**: PostgreSQL storage is bound to `/var/lib/medicore/pgdata` on the host, ensuring database persistence is completely independent of container lifecycles.
+
 
