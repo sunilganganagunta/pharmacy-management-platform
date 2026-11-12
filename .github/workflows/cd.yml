@@ -105,8 +105,6 @@ jobs:
           ECR_REGISTRY: ${{ secrets.ECR_REGISTRY || '774697186763.dkr.ecr.ap-southeast-2.amazonaws.com' }}
           IMAGE_TAG: ${{ needs.build-and-push-ecr.outputs.image_tag }}
           AWS_REGION: ${{ secrets.AWS_REGION || 'ap-southeast-2' }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           echo "=== MediCore Deployment via AWS SSM Starting ==="
           echo "Target Instance: $EC2_INSTANCE_ID"
@@ -119,28 +117,14 @@ jobs:
 
           aws ecr get-login-password --region __AWS_REGION__ | docker login --username AWS --password-stdin __ECR_REGISTRY__
 
-          # Safely update or initialize production .env without wiping existing secrets
+          # Safely update production image tag while preserving host runtime secrets
           if [ -f .env ]; then
             echo "Existing production .env found. Preserving active secrets..."
             sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=__IMAGE_TAG__|" .env
             sed -i "s|^ECR_REGISTRY=.*|ECR_REGISTRY=__ECR_REGISTRY__|" .env
-            if [ -n "__POSTGRES_PASSWORD__" ]; then
-              sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=__POSTGRES_PASSWORD__|" .env
-            fi
-            if [ -n "__JWT_SECRET__" ]; then
-              sed -i "s|^JWT_SECRET=.*|JWT_SECRET=__JWT_SECRET__|" .env
-            fi
           else
-            echo "Initializing production .env..."
-            cat << 'ENVFILE' > .env
-          ECR_REGISTRY=__ECR_REGISTRY__
-          IMAGE_TAG=__IMAGE_TAG__
-          POSTGRES_PASSWORD=__POSTGRES_PASSWORD__
-          JWT_SECRET=__JWT_SECRET__
-          POSTGRES_DB=medicoredb
-          POSTGRES_USER=medicore_user
-          ENVFILE
-            chmod 600 .env
+            echo "ERROR: Production .env not found on EC2 host! Deployment aborted to prevent uninitialized secrets."
+            exit 1
           fi
 
           docker pull __ECR_REGISTRY__/medicore-backend:__IMAGE_TAG__
@@ -156,7 +140,7 @@ jobs:
           echo "Waiting 25 seconds for container startup..."
           sleep 25
 
-          if curl -f http://localhost:8080/actuator/health || curl -f http://localhost/actuator/health; then
+          if curl -f http://localhost/actuator/health; then
             echo "Backend Actuator is HEALTHY."
           else
             echo "Backend health check failed! Rolling back..."
@@ -238,13 +222,11 @@ jobs:
           ECR_REGISTRY: ${{ secrets.ECR_REGISTRY || '774697186763.dkr.ecr.ap-southeast-2.amazonaws.com' }}
           IMAGE_TAG: ${{ needs.build-and-push-ecr.outputs.image_tag }}
           AWS_REGION: ${{ secrets.AWS_REGION || 'ap-southeast-2' }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         with:
           host: ${{ secrets.EC2_HOST || '15.135.82.107' }}
           username: ${{ secrets.EC2_USER || 'ubuntu' }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: ECR_REGISTRY,IMAGE_TAG,AWS_REGION,POSTGRES_PASSWORD,JWT_SECRET
+          envs: ECR_REGISTRY,IMAGE_TAG,AWS_REGION
           script: |
             set -e
             echo "=== MediCore Automated Cloud Deployment Starting (SSH) ==="
@@ -262,23 +244,10 @@ jobs:
               echo "Existing production .env found. Preserving active secrets..."
               sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$IMAGE_TAG|" .env
               sed -i "s|^ECR_REGISTRY=.*|ECR_REGISTRY=$ECR_REGISTRY|" .env
-              if [ -n "$POSTGRES_PASSWORD" ]; then
-                sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$POSTGRES_PASSWORD|" .env
-              fi
-              if [ -n "$JWT_SECRET" ]; then
-                sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$JWT_SECRET|" .env
-              fi
             else
-              echo "Initializing production .env..."
-              cat <<EOF > .env
-            ECR_REGISTRY=$ECR_REGISTRY
-            IMAGE_TAG=$IMAGE_TAG
-            POSTGRES_PASSWORD=$POSTGRES_PASSWORD
-            JWT_SECRET=$JWT_SECRET
-            POSTGRES_DB=medicoredb
-            POSTGRES_USER=medicore_user
-            EOF
-              chmod 600 .env
+              echo "ERROR: Production .env not found on EC2 host! Deployment aborted."
+              exit 1
+            fi
             fi
 
             # 4. Pull new immutable images from Amazon ECR
@@ -300,7 +269,7 @@ jobs:
 
             # Health Check 1: Spring Boot Actuator
             echo "Checking Backend health..."
-            if curl -f http://localhost:8080/actuator/health || curl -f http://localhost/actuator/health; then
+            if curl -f http://localhost/actuator/health; then
               echo "Backend is HEALTHY."
             else
               echo "Backend health check failed! Initiating automated rollback..."

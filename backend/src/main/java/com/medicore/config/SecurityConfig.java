@@ -27,7 +27,7 @@ public class SecurityConfig {
     private final AuthEntryPointJwt unauthorizedHandler;
     private final AuthTokenFilter authTokenFilter;
 
-    @Value("${medicore.swagger.public:true}")
+    @Value("${medicore.swagger.public:false}")
     private boolean swaggerPublic;
 
     public SecurityConfig(CustomUserDetailsService userDetailsService,

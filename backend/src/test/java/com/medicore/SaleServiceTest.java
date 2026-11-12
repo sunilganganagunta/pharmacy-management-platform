@@ -114,5 +114,48 @@ class SaleServiceTest {
 
         assertThrows(ExpiredMedicineException.class, () -> saleService.processSale(req));
     }
+
+    @Test
+    @DisplayName("Should atomically rollback entire multi-item sale when one item fails stock check")
+    void testMultiItemSaleRollbackWhenSecondItemFails() {
+        // Item 1: Sufficient stock (50 units)
+        MedicineDto med1 = new MedicineDto();
+        med1.setName("Item One Available");
+        med1.setGenericName("Available Med");
+        med1.setBatchNumber("BATCH-A1");
+        med1.setPurchasePrice(BigDecimal.TEN);
+        med1.setSellingPrice(new BigDecimal("25.00"));
+        med1.setAvailableQuantity(50);
+        med1.setMinimumStock(5);
+        med1.setExpiryDate(LocalDate.now().plusDays(180));
+        MedicineDto created1 = medicineService.createMedicine(med1);
+
+        // Item 2: Deficient stock (only 2 units available)
+        MedicineDto med2 = new MedicineDto();
+        med2.setName("Item Two Low");
+        med2.setGenericName("Low Med");
+        med2.setBatchNumber("BATCH-B2");
+        med2.setPurchasePrice(BigDecimal.TEN);
+        med2.setSellingPrice(new BigDecimal("15.00"));
+        med2.setAvailableQuantity(2);
+        med2.setMinimumStock(5);
+        med2.setExpiryDate(LocalDate.now().plusDays(180));
+        MedicineDto created2 = medicineService.createMedicine(med2);
+
+        // Cart requesting 5 of Item 1 (valid) and 10 of Item 2 (invalid)
+        SaleRequestDto req = new SaleRequestDto();
+        req.setCustomerName("Atomic Test");
+        req.setItems(List.of(
+                new SaleItemRequestDto(created1.getId(), 5),
+                new SaleItemRequestDto(created2.getId(), 10)
+        ));
+
+        // Must throw InsufficientStockException
+        assertThrows(InsufficientStockException.class, () -> saleService.processSale(req));
+
+        // Atomicity verification: Item 1 stock must NOT have been decremented
+        MedicineDto refreshed1 = medicineService.getMedicineById(created1.getId());
+        assertEquals(50, refreshed1.getAvailableQuantity(), "Item 1 stock must remain unchanged after rollback");
+    }
 }
 

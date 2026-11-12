@@ -180,4 +180,21 @@ class AuthServiceTest {
         BadRequestException ex = assertThrows(BadRequestException.class, () -> authService.confirmPasswordReset(req));
         assertTrue(ex.getMessage().contains("Invalid or expired"), "Invalid token must be rejected");
     }
+
+    @Test
+    @DisplayName("SEC-02: Rate limiting restricts excessive password reset requests")
+    void testPasswordResetRateLimiting() {
+        authService.clearResetRateLimitHistory();
+        ForgotPasswordRequest req = new ForgotPasswordRequest();
+        req.setEmail("ratelimit.test@medicore.com");
+
+        // First 5 requests within the window succeed
+        for (int i = 0; i < 5; i++) {
+            assertDoesNotThrow(() -> authService.initiatePasswordReset(req));
+        }
+
+        // 6th request within the window must be rejected
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> authService.initiatePasswordReset(req));
+        assertTrue(ex.getMessage().contains("Too many password reset requests"));
+    }
 }

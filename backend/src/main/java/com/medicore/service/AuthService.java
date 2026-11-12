@@ -25,14 +25,20 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Deque;
 import java.util.HexFormat;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Service
 public class AuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
     private static final int RESET_TOKEN_EXPIRY_MINUTES = 15;
+    private static final int MAX_RESET_REQUESTS_PER_WINDOW = 5;
+    private static final long RESET_RATE_LIMIT_WINDOW_MINUTES = 15;
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
@@ -40,6 +46,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final Map<String, Deque<Instant>> resetRequestHistory = new ConcurrentHashMap<>();
 
     public AuthService(AuthenticationManager authenticationManager,
                        UserRepository userRepository,
@@ -136,9 +143,15 @@ public class AuthService {
      * SEC-02: Secure Password Reset Initiation.
      * Returns a generic message to prevent user enumeration.
      * Generates a cryptographically secure, SHA-256 hashed, 15-minute token.
+     * Enforces rate limiting (maximum 5 requests per 15 minutes per email).
      */
     @Transactional
     public String initiatePasswordReset(ForgotPasswordRequest request) {
+        if (request != null && request.getEmail() != null && isResetRateLimited(request.getEmail())) {
+            logger.warn("Password reset rate limit exceeded for email: {}", request.getEmail());
+            throw new BadRequestException("Too many password reset requests. Please wait 15 minutes before trying again.");
+        }
+
         Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
 
         if (userOptional.isPresent()) {
@@ -234,6 +247,31 @@ public class AuthService {
             logger.warn("Legacy direct password reset attempt received for email: {}. Please use token-based flow.", request.getEmail());
         }
         initiatePasswordReset(request);
+    }
+
+    public boolean isResetRateLimited(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        String key = email.toLowerCase().trim();
+        Instant now = Instant.now();
+        Instant windowStart = now.minus(RESET_RATE_LIMIT_WINDOW_MINUTES, ChronoUnit.MINUTES);
+
+        Deque<Instant> timestamps = resetRequestHistory.computeIfAbsent(key, k -> new ConcurrentLinkedDeque<>());
+        synchronized (timestamps) {
+            while (!timestamps.isEmpty() && timestamps.peekFirst().isBefore(windowStart)) {
+                timestamps.pollFirst();
+            }
+            if (timestamps.size() >= MAX_RESET_REQUESTS_PER_WINDOW) {
+                return true;
+            }
+            timestamps.addLast(now);
+            return false;
+        }
+    }
+
+    public void clearResetRateLimitHistory() {
+        resetRequestHistory.clear();
     }
 
     private String hashToken(String token) {

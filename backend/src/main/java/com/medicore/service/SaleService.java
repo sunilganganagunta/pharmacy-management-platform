@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -116,10 +117,12 @@ public class SaleService {
         User pharmacist = getCurrentUser();
         sale.setPharmacist(pharmacist);
 
-        // 3. Process Cart Items and check stock & expiry
+        // 3. Process Cart Items: 2-Phase Atomic Validation & Stock Deduction
         BigDecimal subtotal = BigDecimal.ZERO;
         String username = pharmacist != null ? pharmacist.getUsername() : "pharmacist";
 
+        // Phase 3a: Pre-validate all cart items for existence, expiry, and sufficient stock
+        List<Medicine> validatedMedicines = new ArrayList<>();
         for (SaleItemRequestDto itemReq : request.getItems()) {
             Medicine medicine = medicineRepository.findById(itemReq.getMedicineId())
                     .orElseThrow(() -> new ResourceNotFoundException("Medicine not found with ID: " + itemReq.getMedicineId()));
@@ -135,6 +138,14 @@ public class SaleService {
                 throw new InsufficientStockException("Insufficient stock for '" + medicine.getName() +
                         "'. Requested: " + itemReq.getQuantity() + ", Available: " + medicine.getAvailableQuantity());
             }
+
+            validatedMedicines.add(medicine);
+        }
+
+        // Phase 3b: All items valid; proceed to decrement inventory, log audit transactions, and build sale items
+        for (int i = 0; i < request.getItems().size(); i++) {
+            SaleItemRequestDto itemReq = request.getItems().get(i);
+            Medicine medicine = validatedMedicines.get(i);
 
             // Decrement Stock
             int previousStock = medicine.getAvailableQuantity();

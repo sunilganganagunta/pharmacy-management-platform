@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/notifications")
 @Tag(name = "Notifications", description = "System alerts, low stock warnings, expiry notices, and transaction notifications")
+@PreAuthorize("hasAnyRole('ADMIN', 'PHARMACIST', 'CASHIER')")
 public class NotificationController {
 
     private final NotificationService notificationService;
