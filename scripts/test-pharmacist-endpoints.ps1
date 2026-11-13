@@ -39,8 +39,8 @@ Test-Endpoint "/api/reports/sales?range=daily" "Get" $pharmHeaders 200 "Daily Sa
 Test-Endpoint "/api/notifications/unread-count" "Get" $pharmHeaders 200 "Unread Notifications"
 Test-Endpoint "/api/auth/me" "Get" $pharmHeaders 200 "Current User Profile (/auth/me)"
 
-# Forbidden Pharmacist Endpoints (Admin-only)
-Test-Endpoint "/api/reports/financial" "Get" $pharmHeaders 403 "Forbidden: Financial Profit Report"
+# Forbidden Pharmacist Endpoints (Admin-only operations, e.g. medicine deletion)
+Test-Endpoint "/api/medicines/999999" "Delete" $pharmHeaders 403 "Forbidden: Admin Medicine Deletion"
 
 # Missing / Invalid JWT
 Test-Endpoint "/api/dashboard/stats" "Get" @{} 401 "Forbidden: Missing JWT"
