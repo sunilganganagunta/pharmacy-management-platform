@@ -256,4 +256,11 @@ class AuthServiceTest {
         assertEquals("cashier", response.getUsername());
         assertEquals("CASHIER", response.getRole());
     }
+
+    @Test
+    @DisplayName("Generate and verify BCrypt hash for Pharmacist@123")
+    void generatePharmacistHash() {
+        String hash = passwordEncoder.encode("Pharmacist@123");
+        assertTrue(passwordEncoder.matches("Pharmacist@123", hash));
+    }
 }
