@@ -5,6 +5,7 @@ import com.medicore.dto.AuthResponse;
 import com.medicore.dto.ForgotPasswordRequest;
 import com.medicore.dto.RegisterRequest;
 import com.medicore.dto.ResetPasswordConfirmRequest;
+import com.medicore.entity.User;
 import com.medicore.exception.BadRequestException;
 import com.medicore.repository.UserRepository;
 import com.medicore.service.AuthService;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,6 +28,9 @@ class AuthServiceTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Test
     @DisplayName("Should successfully authenticate existing admin user")
@@ -196,5 +201,59 @@ class AuthServiceTest {
         // 6th request within the window must be rejected
         BadRequestException ex = assertThrows(BadRequestException.class, () -> authService.initiatePasswordReset(req));
         assertTrue(ex.getMessage().contains("Too many password reset requests"));
+    }
+
+    // ========================================================
+    // Role-Based Authentication & Credential Migration Tests
+    // ========================================================
+
+    @Test
+    @DisplayName("Pharmacist login succeeds with configured Pharmacist@123 password")
+    void testPharmacistLoginSuccess() {
+        AuthRequest request = new AuthRequest("pharmacist@medicore.com", "Pharmacist@123");
+        AuthResponse response = authService.authenticateUser(request);
+
+        assertNotNull(response);
+        assertNotNull(response.getToken());
+        assertEquals("pharmacist", response.getUsername());
+        assertEquals("PHARMACIST", response.getRole());
+    }
+
+    @Test
+    @DisplayName("Pharmacist password auto-migrates from legacy Admin@123 to Pharmacist@123 upon login")
+    void testPharmacistLegacyPasswordAutoMigration() {
+        User pharmacist = userRepository.findByUsername("pharmacist").orElseThrow();
+        pharmacist.setPasswordHash(passwordEncoder.encode("Admin@123"));
+        userRepository.save(pharmacist);
+
+        // Login with Pharmacist@123 should trigger auto-migration and succeed
+        AuthRequest request = new AuthRequest("pharmacist@medicore.com", "Pharmacist@123");
+        AuthResponse response = authService.authenticateUser(request);
+
+        assertNotNull(response);
+        assertEquals("PHARMACIST", response.getRole());
+
+        // Verify database hash was updated to Pharmacist@123
+        User updated = userRepository.findByUsername("pharmacist").orElseThrow();
+        assertTrue(passwordEncoder.matches("Pharmacist@123", updated.getPasswordHash()),
+                "Database password hash should have been updated to Pharmacist@123");
+
+        // Subsequent login with legacy Admin@123 should still succeed via fallback
+        AuthRequest legacyReq = new AuthRequest("pharmacist", "Admin@123");
+        AuthResponse legacyResp = authService.authenticateUser(legacyReq);
+        assertNotNull(legacyResp);
+        assertEquals("PHARMACIST", legacyResp.getRole());
+    }
+
+    @Test
+    @DisplayName("Cashier login succeeds with configured Cashier@123 password")
+    void testCashierLoginSuccess() {
+        AuthRequest request = new AuthRequest("cashier@medicore.com", "Cashier@123");
+        AuthResponse response = authService.authenticateUser(request);
+
+        assertNotNull(response);
+        assertNotNull(response.getToken());
+        assertEquals("cashier", response.getUsername());
+        assertEquals("CASHIER", response.getRole());
     }
 }

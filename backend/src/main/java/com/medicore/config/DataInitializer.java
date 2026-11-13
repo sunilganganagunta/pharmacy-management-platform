@@ -50,20 +50,30 @@ public class DataInitializer implements CommandLineRunner {
             initializedAny = true;
         }
 
-        // Ensure default pharmacist user exists
-        if (!userRepository.existsByUsername("pharmacist")) {
-            User pharmacist = new User(
-                    "pharmacist",
-                    "pharmacist@medicore.com",
-                    passwordEncoder.encode(pharmacistPassword),
-                    "Priya Patel (Lead Pharmacist)",
-                    "+91 98765 43211",
-                    User.Role.PHARMACIST
-            );
-            userRepository.save(pharmacist);
-            logger.info("Initialized default PHARMACIST user: pharmacist@medicore.com");
-            initializedAny = true;
-        }
+        // Ensure default pharmacist user exists and credentials match configured default
+        userRepository.findByUsername("pharmacist").ifPresentOrElse(
+                pharmacist -> {
+                    if (!passwordEncoder.matches(pharmacistPassword, pharmacist.getPasswordHash())) {
+                        if (passwordEncoder.matches("Admin@123", pharmacist.getPasswordHash())) {
+                            pharmacist.setPasswordHash(passwordEncoder.encode(pharmacistPassword));
+                            userRepository.save(pharmacist);
+                            logger.info("Synchronized existing default PHARMACIST user password to configured default");
+                        }
+                    }
+                },
+                () -> {
+                    User pharmacist = new User(
+                            "pharmacist",
+                            "pharmacist@medicore.com",
+                            passwordEncoder.encode(pharmacistPassword),
+                            "Priya Patel (Lead Pharmacist)",
+                            "+91 98765 43211",
+                            User.Role.PHARMACIST
+                    );
+                    userRepository.save(pharmacist);
+                    logger.info("Initialized default PHARMACIST user: pharmacist@medicore.com");
+                }
+        );
 
         // Ensure default cashier user exists (SEC-03 3-tier RBAC)
         if (!userRepository.existsByUsername("cashier")) {

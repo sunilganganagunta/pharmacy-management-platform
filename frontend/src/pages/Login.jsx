@@ -37,6 +37,9 @@ const Login = () => {
     if (userType === 'ADMIN') {
       setUsername('admin@medicore.com');
       setPassword('Admin@123');
+    } else if (userType === 'CASHIER') {
+      setUsername('cashier@medicore.com');
+      setPassword('Cashier@123');
     } else {
       setUsername('pharmacist@medicore.com');
       setPassword('Pharmacist@123');
@@ -125,22 +128,30 @@ const Login = () => {
               <ShieldCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" />
               <span>One-Click Demo Credentials:</span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickLogin('ADMIN')}
                 className="flex flex-col items-start rounded-xl border border-slate-200 bg-white p-2.5 text-left text-xs hover:border-brand-500 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500 dark:hover:bg-slate-800/80 transition"
               >
-                <span className="font-semibold text-slate-900 dark:text-white">Admin Account</span>
-                <span className="text-[10px] text-slate-400">admin@medicore.com</span>
+                <span className="font-semibold text-slate-900 dark:text-white">Admin</span>
+                <span className="text-[10px] text-slate-400 truncate w-full">admin@medicore</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickLogin('PHARMACIST')}
                 className="flex flex-col items-start rounded-xl border border-slate-200 bg-white p-2.5 text-left text-xs hover:border-brand-500 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500 dark:hover:bg-slate-800/80 transition"
               >
-                <span className="font-semibold text-slate-900 dark:text-white">Pharmacist Account</span>
-                <span className="text-[10px] text-slate-400">pharmacist@medicore.com</span>
+                <span className="font-semibold text-slate-900 dark:text-white">Pharmacist</span>
+                <span className="text-[10px] text-slate-400 truncate w-full">pharmacist@...</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('CASHIER')}
+                className="flex flex-col items-start rounded-xl border border-slate-200 bg-white p-2.5 text-left text-xs hover:border-brand-500 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-brand-500 dark:hover:bg-slate-800/80 transition"
+              >
+                <span className="font-semibold text-slate-900 dark:text-white">Cashier</span>
+                <span className="text-[10px] text-slate-400 truncate w-full">cashier@medicore</span>
               </button>
             </div>
           </div>
