@@ -46,13 +46,20 @@ if [ "${FILE_SIZE}" -lt 1024 ]; then
 fi
 echo "Database dump completed: ${BACKUP_FILE} (${FILE_SIZE} bytes)"
 
-# 4. Encrypt with AES-256-CBC if key file exists
+# 4. Encrypt with AES-256-CBC if key file exists & generate HMAC-SHA256 integrity signature
 if [ -f "${KEY_FILE}" ]; then
-  echo "Encrypting backup with AES-256-CBC using ${KEY_FILE}..."
+  echo "Encrypting backup with AES-256-CBC using ${KEY_FILE} (PBKDF2, 100,000 iterations)..."
   openssl enc -aes-256-cbc -salt -pbkdf2 -iter 100000 -in "${BACKUP_FILE}" -out "${ENCRYPTED_FILE}" -pass file:"${KEY_FILE}"
   chmod 600 "${ENCRYPTED_FILE}"
+  
+  # Authenticated Integrity Verification (HMAC-SHA256)
+  echo "Generating HMAC-SHA256 integrity signature..."
+  openssl dgst -sha256 -hmac "$(cat "${KEY_FILE}")" "${ENCRYPTED_FILE}" | awk '{print $NF}' > "${ENCRYPTED_FILE}.hmac"
+  chmod 600 "${ENCRYPTED_FILE}.hmac"
+  
   rm -f "${BACKUP_FILE}" # Securely remove plaintext compressed dump
   echo "Backup encrypted: ${ENCRYPTED_FILE}"
+  echo "HMAC-SHA256 integrity file: ${ENCRYPTED_FILE}.hmac"
 else
   echo "WARNING: Key file ${KEY_FILE} not found. Keeping compressed dump unencrypted with chmod 600."
   chmod 600 "${BACKUP_FILE}"

@@ -36,13 +36,26 @@ docker exec "${CONTAINER_NAME}" psql -U "${DB_USER}" -d postgres -tc "SELECT 1 F
 
 TEMP_DECRYPT="/tmp/restore_temp_$(date +%s).sql.gz"
 
-# Decrypt if encrypted
+# Decrypt if encrypted & verify HMAC-SHA256 integrity signature
 if [[ "${BACKUP_FILE}" == *.enc ]]; then
   if [ ! -f "${KEY_FILE}" ]; then
     echo "ERROR: Key file '${KEY_FILE}' required to decrypt ${BACKUP_FILE}!" >&2
     exit 1
   fi
-  echo "Decrypting ${BACKUP_FILE}..."
+
+  # Authenticated Integrity Verification
+  if [ -f "${BACKUP_FILE}.hmac" ]; then
+    echo "Verifying HMAC-SHA256 authenticated integrity signature..."
+    EXPECTED_HMAC=$(cat "${BACKUP_FILE}.hmac" | tr -d '[:space:]')
+    ACTUAL_HMAC=$(openssl dgst -sha256 -hmac "$(cat "${KEY_FILE}")" "${BACKUP_FILE}" | awk '{print $NF}' | tr -d '[:space:]')
+    if [ "${EXPECTED_HMAC}" != "${ACTUAL_HMAC}" ]; then
+      echo "ERROR: HMAC integrity verification failed! Backup file has been tampered with or corrupted." >&2
+      exit 1
+    fi
+    echo "HMAC-SHA256 integrity verified successfully (Authenticity confirmed)."
+  fi
+
+  echo "Decrypting ${BACKUP_FILE} (AES-256-CBC, PBKDF2)..."
   openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -in "${BACKUP_FILE}" -out "${TEMP_DECRYPT}" -pass file:"${KEY_FILE}"
   RESTORE_SRC="${TEMP_DECRYPT}"
 else
