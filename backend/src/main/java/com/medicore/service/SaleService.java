@@ -124,7 +124,7 @@ public class SaleService {
         // Phase 3a: Pre-validate all cart items for existence, expiry, and sufficient stock
         List<Medicine> validatedMedicines = new ArrayList<>();
         for (SaleItemRequestDto itemReq : request.getItems()) {
-            Medicine medicine = medicineRepository.findById(itemReq.getMedicineId())
+            Medicine medicine = medicineRepository.findByIdWithLock(itemReq.getMedicineId())
                     .orElseThrow(() -> new ResourceNotFoundException("Medicine not found with ID: " + itemReq.getMedicineId()));
 
             // Safety Rule: Check if expired

@@ -1,32 +1,26 @@
 # MediCore – Smart Pharmacy Management Platform
+
 ### Cloud Deployment, Docker Containerization, CI/CD Automation & Full-Stack SaaS Architecture
 
-[![CI](https://github.com/sunilganganagunta/pharmacy-management-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/sunilganganagunta/pharmacy-management-platform/actions/workflows/ci.yml)
-[![CD](https://github.com/sunilganganagunta/pharmacy-management-platform/actions/workflows/cd.yml/badge.svg)](https://github.com/sunilganganagunta/pharmacy-management-platform/actions/workflows/cd.yml)
-[![Java](https://img.shields.io/badge/Java-21%20LTS-orange.svg)](https://www.oracle.com/java/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
-[![Docker](https://img.shields.io/badge/Docker-Multi--stage-2496ED.svg)](https://www.docker.com/)
-[![AWS](https://img.shields.io/badge/AWS-EC2%20%7C%20ECR%20%7C%20IAM-FF9900.svg)](https://aws.amazon.com/)
-[![License](https://img.shields.io/badge/License-Proprietary-red.svg)]()
-
-> A full-stack pharmacy management platform with Java Spring Boot, React, PostgreSQL, Docker, GitHub Actions CI/CD and AWS deployment.
-
-> **Tagline:** Smart Pharmacy Management. Simplified.  
-> **Company:** ALGiONS AI LABS PRIVATE LIMITED  
-> **Designation:** DevOps and Cloud Engineering Intern  
-> **Project:** Cloud Deployment & CI/CD – Pharmacy Management Platform  
+![Java](https://img.shields.io/badge/Java-21-orange.svg)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen.svg)
+![React](https://img.shields.io/badge/React-18-blue.svg)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)
+![Docker](https://img.shields.io/badge/Docker-Multi--stage-2496ED.svg)
+![AWS](https://img.shields.io/badge/AWS-EC2%20%7C%20ECR%20%7C%20SSM-FF9900.svg)
+![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF.svg)
+![License](https://img.shields.io/badge/License-Proprietary-red.svg)
 
 ---
 
 ## 1. Project Overview
 **MediCore** is an enterprise-grade, commercial healthcare SaaS platform engineered for clinical pharmacies, hospital dispensaries, and retail medical chains. Built using modern cloud-native architectural patterns, MediCore streamlines Point of Sale (POS) billing, lot-level inventory tracking, vendor procurement reconciliation, automated expiration detection, and executive analytics.
 
-Unlike standard tutorial applications, MediCore operates exclusively with normalized PostgreSQL database records, ACID-compliant transactional guarantees, and automated continuous delivery directly to Amazon Web Services (AWS).
+Unlike standard tutorial applications, MediCore operates exclusively with normalized PostgreSQL database records, ACID-compliant transactional guarantees, pessimistic row locking to prevent overselling, and automated continuous delivery directly to Amazon Web Services (AWS).
 
 ---
 
-## 2. Problem Statement
+## 2. Business Problem
 Traditional pharmacy and dispensary management suffers from severe operational bottlenecks:
 1. **Manual Inefficiencies:** Handwritten billing, paper records, and uncoordinated vendor communication cause order errors and inventory discrepancies.
 2. **Clinical Expiry Risks:** Dispensing expired drugs carries critical health hazards and regulatory penalties. Without automated pre-expiry detection (30-day alerts), pharmacies endure heavy financial shrinkage.
@@ -35,49 +29,13 @@ Traditional pharmacy and dispensary management suffers from severe operational b
 
 ---
 
-## 3. Project Objectives
-- Build an enterprise-ready, multi-tier pharmacy SaaS platform adhering to modern UI/UX design standards.
-- Enforce strict database transactions preventing negative stock and blocking sales of expired medicines.
-- Implement multi-stage Docker containerization for minimal, secure, and non-root execution.
-- Create an automated **CI/CD pipeline** via GitHub Actions: **Code Push &rarr; Automated Build & Test &rarr; Publish to Amazon ECR &rarr; Automated Zero-Downtime Deployment to AWS EC2**.
-- Architect secure AWS cloud infrastructure adhering to the principle of least privilege.
+## 3. Architecture
 
----
-
-## 4. Main Features
-- **Executive Operations Dashboard:** Real-time KPI cards (Total Medicines, Valuation, Today's Sales, Monthly Revenue, Expiring Lots), interactive weekly/monthly Recharts, and live alert streams.
-- **Point of Sale (POS) Terminal:** Search-as-you-type drug catalog, barcode scan lookup, shopping cart, custom discounts, 12% GST calculation, Cash/Card/UPI support, and printable tax invoices.
-- **Medicine Catalog CRUD:** Manage brand names, generic formulas, batches, barcodes, manufacturing and expiry dates, selling and purchase prices, and minimum stock alerts.
-- **Inventory Ledger & Auditing:** Granular transaction history logging every `STOCK_IN`, `STOCK_OUT`, `ADJUSTMENT`, `SALE`, and `PURCHASE_RECEIVE`.
-- **Purchase Order (PO) Management:** Vendor procurement creation with multi-item line rows. Automatic inventory lot increment occurs only when an order is received.
-- **Vendor Directory:** Track pharmaceutical suppliers, corporate details, contact persons, and purchase history.
-- **Customer Profiles:** Enrolled patients, loyalty purchase tracking, and contact directories.
-- **Executive Reports & CSV Export:** Filter sales by daily, weekly, monthly, or annual horizons; itemized inventory valuation; and one-click CSV file downloads.
-- **Alert Center:** Proactive notifications for low stock, lots expiring within 30 days, expired medicine quarantine, and purchase updates.
-- **Role-Based Access Control (RBAC):** Three-tier permissions architecture enforcing least-privilege operations for `ADMIN`, `PHARMACIST`, and `CASHIER` accounts.
-- **Secure Password Reset:** Cryptographically secure, single-use, 15-minute expiring SHA-256 hashed token workflow (SEC-02) with anti-user enumeration protections.
-
----
-
-## 5. Technology Stack
-
-| Layer | Technologies |
-|---|---|
-| **Frontend** | React 18, Vite, JavaScript, Tailwind CSS, Lucide React, Recharts, Axios, React Router 6 |
-| **Backend** | Java 21, Spring Boot 3.3.5, Spring Security 6, Spring Data JPA, Hibernate, Maven, JWT (JJWT 0.12.6) |
-| **Database** | PostgreSQL 16, Flyway Database Migrations |
-| **Containerization** | Docker Engine, Docker Compose, Multi-stage builds, Alpine Linux |
-| **DevOps & CI/CD** | Git, GitHub, GitHub Actions, Docker Buildx, Shell Scripting |
-| **AWS Cloud** | Amazon EC2 (Ubuntu), Amazon ECR, AWS IAM, Security Groups, CloudWatch |
-| **Web Server** | Nginx (Reverse Proxy & Static Web Server), Let's Encrypt SSL/TLS |
-
----
-
-## 6. System Architecture
+MediCore implements a decoupled, 3-tier containerized architecture orchestrated via Docker Compose and deployed on AWS EC2:
 
 ```mermaid
 flowchart TD
-    Client["Clients: Web Browsers / POS Terminals / Mobile"] -->|"HTTPS / TLS (Port 443/80)"| Nginx["Nginx Reverse Proxy & Static SPA Server"]
+    Client["Clients: Web Browsers / POS Terminals / Mobile"] -->|"HTTP / Reverse Proxy (Port 80)"| Nginx["Nginx Reverse Proxy & Static SPA Server"]
     
     subgraph Frontend Tier ["Frontend Tier (Docker Container)"]
         Nginx -->|"Static Routing"| ReactApp["React 18 + Vite + Tailwind CSS"]
@@ -85,364 +43,382 @@ flowchart TD
 
     subgraph Backend Tier ["Backend Tier (Docker Container)"]
         Nginx -->|"API Proxy (/api/*)"| SpringBoot["Spring Boot 3.3.5 (Java 21)"]
-        SpringBoot --> Security["Spring Security 6 (JWT Filter)"]
+        SpringBoot --> Security["Spring Security 6 (JWT Filter & RBAC)"]
         Security --> Controllers["REST API Controllers"]
-        Controllers --> Services["Business Service Layer (Transactional)"]
+        Controllers --> Services["Business Service Layer (Pessimistic Locking & ACID)"]
         Services --> Repositories["Spring Data JPA & Hibernate"]
     end
 
-    subgraph Data Tier ["Data Tier (Docker Container / RDS)"]
-        Repositories -->|"JDBC Connection Pool (HikariCP)"| Postgres["PostgreSQL 16 (Flyway Migrations)"]
+    subgraph Data Tier ["Data Tier (Docker Container)"]
+        Repositories -->|"JDBC HikariCP Pool"| Postgres["PostgreSQL 16 (Flyway Migrations V1-V4)"]
+        Postgres --> PersistentVolume[("Docker Named Volume: pgdata")]
     end
 
     subgraph Observability ["Observability & Cloud Services"]
-        SpringBoot -->|"Health & Metrics (/actuator)"| CloudWatch["AWS CloudWatch / System Health"]
+        SpringBoot -->|"Health & Readiness (/actuator)"| Actuator["Spring Boot Actuator Health Probe"]
     end
 ```
 
-For complete architectural specifications, see [ARCHITECTURE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/ARCHITECTURE.md).
+### Architectural Highlights
+- **Stateless Application Tier:** Spring Boot runs in a stateless session configuration; all authentication context is derived from cryptographically signed HMAC-SHA256 JWT tokens.
+- **Pessimistic Locking on Checkout:** `SaleService` acquires `@Lock(LockModeType.PESSIMISTIC_WRITE)` on medicine rows during checkout, issuing `SELECT ... FOR UPDATE` in PostgreSQL to eliminate concurrency race conditions.
+- **Persistent Storage:** PostgreSQL state is mounted to a managed Docker volume (`pgdata`), ensuring data survives container restarts and upgrades.
 
 ---
 
-## 7. Database ER Diagram
+## 4. Technology Stack
 
-```mermaid
-erDiagram
-    USERS ||--o{ SALES : "processes"
-    MEDICINE_CATEGORIES ||--o{ MEDICINES : "categorizes"
-    SUPPLIERS ||--o{ MEDICINES : "supplies"
-    SUPPLIERS ||--o{ PURCHASE_ORDERS : "receives"
-    MEDICINES ||--o{ INVENTORY_TRANSACTIONS : "audits"
-    MEDICINES ||--o{ PURCHASE_ORDER_ITEMS : "contains"
-    MEDICINES ||--o{ SALE_ITEMS : "sold"
-    CUSTOMERS ||--o{ SALES : "places"
-    PURCHASE_ORDERS ||--|{ PURCHASE_ORDER_ITEMS : "has"
-    SALES ||--|{ SALE_ITEMS : "has"
-```
-
-For full table schemas, foreign keys, and index configurations, see [ER_DIAGRAM.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/ER_DIAGRAM.md).
+| Layer | Technologies |
+|---|---|
+| **Frontend** | React 18, Vite 5, JavaScript, Tailwind CSS 3, Lucide React, Recharts, Axios, React Router 6 |
+| **Backend** | Java 21, Spring Boot 3.3.5, Spring Security 6, Spring Data JPA, Hibernate, Maven, JJWT 0.12.6 |
+| **Database** | PostgreSQL 16 Alpine, Flyway Database Migrations (V1, V2, V3, V4) |
+| **Containerization** | Docker Engine, Docker Compose, Multi-stage builds, Alpine Linux |
+| **DevOps & CI/CD** | Git, GitHub, GitHub Actions, Docker Buildx, Shell Scripting |
+| **AWS Cloud** | Amazon EC2 (`t3.micro`), Amazon ECR, AWS IAM, AWS Systems Manager (SSM) |
+| **Web Server** | Nginx 1.27 Alpine (Reverse Proxy & Static Web Server) |
 
 ---
 
-## 8. Project Folder Structure
-```
+## 5. Repository Structure
+
+```text
 pharmacy-management-platform/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                 # Automated Continuous Integration (Build & Test)
-│       └── cd.yml                 # Automated Continuous Deployment to AWS ECR & EC2
+│       ├── ci.yml                 # Automated Continuous Integration (Java 21 + Node 22)
+│       └── cd.yml                 # Automated Continuous Deployment (ECR + EC2 via SSM)
 ├── backend/
 │   ├── src/
 │   │   ├── main/
-│   │   │   ├── java/com/medicore/ # Controllers, Services, Repositories, DTOs, Security
+│   │   │   ├── java/com/medicore/ # Controllers, Services, Entities, DTOs, Security
 │   │   │   └── resources/
 │   │   │       ├── application.yml
-│   │   │       └── db/migration/  # Flyway schema V1 & dynamic seed data V2
-│   │   └── test/                  # Automated unit and integration test suite
-│   ├── Dockerfile                 # Multi-stage Java 21 build
-│   └── pom.xml                    # Maven dependencies
+│   │   │       └── db/migration/  # Flyway SQL migrations (V1 to V4)
+│   │   └── test/                  # 40 automated unit & integration tests
+│   ├── Dockerfile                 # Multi-stage Java 21 JRE Alpine Dockerfile
+│   └── pom.xml                    # Maven dependency management
 ├── frontend/
-│   ├── src/
-│   │   ├── api/                   # Axios client with JWT interceptor
-│   │   ├── components/            # Navbar, Sidebar, Layout, StatCard, Modals, Badges
-│   │   ├── context/               # AuthContext, ThemeContext, NotificationContext
-│   │   └── pages/                 # Dashboard, POS, Medicines, Inventory, Purchases, etc.
-│   ├── Dockerfile                 # Multi-stage Node 22 -> Nginx Alpine build
-│   ├── nginx.conf                 # Production reverse proxy and security headers
-│   └── package.json
-├── docs/
-│   ├── ARCHITECTURE.md            # System Architecture & Sequence Workflows
-│   ├── AWS_DEPLOYMENT_GUIDE.md    # End-to-end AWS EC2, ECR, IAM, Security Groups
-│   ├── ER_DIAGRAM.md              # Database Schema & Relational Specifications
-│   ├── INTERVIEW_PREP.md          # Comprehensive Interview Q&A & Demonstration Script
-│   └── PRESENTATION_SLIDES.md     # 10-Slide Internship Review Deck
+│   ├── src/                       # React components, pages, context, and API clients
+│   ├── nginx.conf                 # Nginx reverse proxy configuration
+│   ├── Dockerfile                 # Multi-stage Node 22 + Nginx Alpine Dockerfile
+│   └── package.json               # NPM dependencies and build scripts
+├── docs/                          # Comprehensive architectural specifications & guides
 ├── scripts/
-│   ├── deploy.sh                  # Host deployment execution
-│   ├── rollback.sh                # Automated rollback procedure
-│   └── health-check.sh            # Production health verification
-├── docker-compose.yml             # Local development multi-container orchestration
-├── docker-compose.prod.yml        # Production AWS EC2 orchestration with ECR images
-└── README.md
+│   ├── backup.sh                  # Encrypted database backup utility
+│   ├── restore.sh                 # Database restore utility
+│   ├── rollback.sh                # Release rollback procedure
+│   └── health-check.sh            # Automated service health evaluation
+├── docker-compose.yml             # Development / Staging orchestration stack
+├── docker-compose.prod.yml        # Production orchestration stack
+├── .env.example                   # Environment configuration template
+├── OPERATIONS.md                  # Operational runbook
+├── SUBMISSION_CHECKLIST.md        # Internship submission verification checklist
+├── DEMO_SCRIPT.md                 # 3–5 minute presentation script
+└── README.md                      # Master documentation
 ```
 
 ---
 
-## 9. Local Installation & Prerequisites
+## 6. Prerequisites
 
-Ensure the following tools are installed on your machine:
-- **Java Development Kit (JDK):** Version 21 LTS
-- **Node.js:** Version 20+ and npm
-- **Apache Maven:** Version 3.9+
-- **Docker & Docker Compose:** Latest version
-- **Git**
+Ensure the following tools are installed on your host machine:
+- **Docker Engine** (version 24.0+) & **Docker Compose** (v2.20+)
+- **Java Development Kit (JDK)**: Version 21 LTS (for local backend development)
+- **Apache Maven**: Version 3.9+ (for backend compilation and test execution)
+- **Node.js**: Version 20 LTS or 22 LTS (for local frontend development)
+- **Git**: Version 2.40+
 
-### Clone the Repository
+---
+
+## 7. Local Setup (Standalone Development)
+
+### A. Clone the Repository
 ```bash
-git clone https://github.com/your-username/pharmacy-management-platform.git
+git clone https://github.com/sunilganganagunta/pharmacy-management-platform.git
 cd pharmacy-management-platform
 ```
 
----
-
-## 10. Environment Configuration
-
-Copy the example environment settings or create a `.env` file in the root directory:
-
-```env
-# PostgreSQL Database Settings
-POSTGRES_DB=medicoredb
-POSTGRES_USER=medicore_user
-POSTGRES_PASSWORD=medicore_pass123
-
-# Spring Boot & Security Settings
-JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-JWT_EXPIRATION_MS=86400000
-CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:80,http://localhost:5173
-
-# Production Deployment Settings
-ECR_REGISTRY=123456789012.dkr.ecr.ap-south-1.amazonaws.com
-IMAGE_TAG=latest
-```
-
----
-
-## 11. Application Execution
-
-### Option A: Complete Docker Compose Execution (Recommended)
-Launch the entire stack (PostgreSQL, Spring Boot Backend, and React Nginx Frontend) with a single command:
-
+### B. Backend Local Execution
 ```bash
-docker compose up -d --build
-```
+# Start standalone PostgreSQL container
+docker run -d --name local-postgres -p 5432:5432 -e POSTGRES_DB=medicoredb -e POSTGRES_USER=medicore_user -e POSTGRES_PASSWORD=medicore_pass123 postgres:16-alpine
 
-- **Frontend Application:** Open [http://localhost](http://localhost) in your browser.
-- **Backend API & Actuator:** [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
-- **OpenAPI / Swagger Documentation:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-
-### Option B: Local Standalone Development
-
-#### 1. Start PostgreSQL
-```bash
-docker run -d --name local-postgres -p 5432:5432 \
-  -e POSTGRES_DB=medicoredb \
-  -e POSTGRES_USER=medicore_user \
-  -e POSTGRES_PASSWORD=medicore_pass123 \
-  postgres:16-alpine
-```
-
-#### 2. Start Backend (Spring Boot 3)
-```bash
+# Run Spring Boot backend
 cd backend
 mvn spring-boot:run
 ```
+The backend initializes database tables via Flyway and listens at `http://localhost:8080`.
 
-#### 3. Start Frontend (Vite)
+### C. Frontend Local Execution
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Open [http://localhost:5173](http://localhost:5173).
+The Vite development server starts at `http://localhost:5173`.
 
 ---
 
-## 12. Default Demo Credentials
+## 8. Docker Compose Setup
 
-The platform is pre-loaded with demonstration accounts for evaluation:
-
-| Role | Username / Email | Password | Access Scope |
-|------|------------------|----------|--------------|
-| **Admin** | `admin@medicore.com` | `Admin@123` | Full access: Users, Catalog, POS, Procurement, Reports, Analytics |
-| **Pharmacist** | `pharmacist@medicore.com` | `Pharmacist@123` | Operations access: Catalog, POS Billing, Stock Adjustments, Invoices |
-| **Cashier** | `cashier@medicore.com` | `Cashier@123` | Counter access: POS Terminal Billing, Customer Registration, Medicine Search |
-
-*One-click quick login buttons are available directly on the login screen.*
-
----
-
-## 13. Docker Commands Reference
+Run the full production-grade multi-container stack with a single command:
 
 ```bash
-# Build and start all services in background
+# 1. Create environment file from template
+cp .env.example .env
+
+# 2. Build and start all 3 services in detached mode
 docker compose up -d --build
 
-# View container logs in real time
-docker compose logs -f
-
-# Check container status and health
+# 3. Verify running containers and health checks
 docker compose ps
-
-# Stop all containers
-docker compose down
-
-# Stop containers and remove persistent database volume (resets data)
-docker compose down -v
 ```
 
+### Container Stack Ports
+- **Frontend & Reverse Proxy:** `http://localhost:80`
+- **Backend Actuator & REST API:** `http://localhost:8080`
+- **PostgreSQL Database:** `localhost:5432`
+
 ---
 
-## 14. API Documentation (RESTful Endpoints)
+## 9. Environment Variable Reference
 
-| Method | Endpoint | Description | Role Required |
-|---|---|---|---|
-| `POST` | `/api/auth/login` | Authenticate user and receive JWT | Public |
-| `POST` | `/api/auth/register` | Register new user account | Public |
-| `POST` | `/api/auth/forgot-password` | Password reset flow | Public |
-| `GET` | `/api/dashboard/stats` | Live KPI cards, charts, alerts | Authenticated |
-| `GET` | `/api/medicines` | Paginated search, category, low stock filter | Authenticated |
-| `POST` | `/api/medicines` | Add new medicine record | Authenticated |
-| `PUT` | `/api/medicines/{id}` | Update existing medicine | Authenticated |
-| `DELETE` | `/api/medicines/{id}` | Deactivate medicine record | ADMIN |
-| `POST` | `/api/inventory/adjust` | Manual Stock In / Stock Out / Adjustment | Authenticated |
-| `GET` | `/api/inventory/history` | Paginated audit transaction ledger | Authenticated |
-| `POST` | `/api/sales` | Complete POS checkout & generate invoice | Authenticated |
-| `GET` | `/api/sales/{id}/invoice` | Get formatted printable invoice | Authenticated |
+Configurable parameters in `.env` (derived from `.env.example`):
+
+| Variable | Default Value | Description |
+| :--- | :--- | :--- |
+| `POSTGRES_DB` | `medicoredb` | Primary database name |
+| `POSTGRES_USER` | `medicore_user` | Database user account |
+| `POSTGRES_PASSWORD` | `medicore_pass123` | Database user password |
+| `POSTGRES_PORT` | `5432` | Exposed PostgreSQL port |
+| `SPRING_PROFILES_ACTIVE` | `prod` | Spring Boot active profile |
+| `SERVER_PORT` | `8080` | Backend application port |
+| `JWT_SECRET` | `(64-char hex key)` | 256-bit secret for signing HMAC-SHA256 JWT tokens |
+| `JWT_EXPIRATION_MS` | `86400000` | JWT token validity in milliseconds (24 hours) |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost...` | Comma-delimited list of allowed CORS origins |
+| `FRONTEND_PORT` | `80` | Public Nginx web server port |
+
+---
+
+## 10. API Endpoints
+
+All business endpoints require a valid JWT Bearer token: `Authorization: Bearer <token>`.
+
+### Authentication (`/api/auth`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/auth/login` | Authenticate user & issue JWT token | Public |
+| `POST` | `/api/auth/register` | Self-registration (strictly forces `PHARMACIST` role) | Public |
+| `POST` | `/api/auth/forgot-password` | Initiate password reset (15-min token, anti-enumeration) | Public |
+| `POST` | `/api/auth/reset-password` | Confirm password reset with single-use token | Public |
+| `GET` | `/api/auth/me` | Retrieve currently authenticated user profile | Authenticated |
+
+### Medicines & Catalog (`/api/medicines`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/medicines` | Paginated, searchable medicine catalogue | Authenticated |
+| `GET` | `/api/medicines/{id}` | Retrieve single medicine by ID | Authenticated |
+| `POST` | `/api/medicines` | Create new medicine with batch & expiry | `ADMIN`, `PHARMACIST` |
+| `PUT` | `/api/medicines/{id}` | Update existing medicine details | `ADMIN`, `PHARMACIST` |
+| `DELETE` | `/api/medicines/{id}` | Deactivate (soft-delete) medicine | `ADMIN` only |
+
+### Point of Sale & Billing (`/api/sales`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/sales` | 2-Phase atomic sale checkout, stock decrement & tax invoice | Authenticated |
+| `GET` | `/api/sales` | Paginated sales transaction history | Authenticated |
+| `GET` | `/api/sales/{id}/invoice` | Generate printable tax invoice | Authenticated |
+
+### Inventory & Procurement
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/inventory/history` | Auditable stock transaction ledger | Authenticated |
+| `POST` | `/api/inventory/adjust` | Manual inventory adjustment (`ADJUSTMENT`, `DAMAGE`) | `ADMIN`, `PHARMACIST` |
 | `GET` | `/api/purchases` | Paginated purchase orders | Authenticated |
-| `POST` | `/api/purchases` | Create vendor purchase order | ADMIN |
-| `PATCH` | `/api/purchases/{id}/status` | Update PO status (RECEIVED updates stock) | Authenticated |
-| `GET` | `/api/reports/sales` | Sales revenue reports with time range | Authenticated |
-| `GET` | `/api/reports/export/sales` | Download sales CSV report | Authenticated |
-| `GET` | `/api/reports/export/inventory` | Download inventory valuation CSV | Authenticated |
-| `GET` | `/api/notifications` | Alert center notifications | Authenticated |
-| `PATCH`| `/api/notifications/{id}/read` | Mark alert as read | Authenticated |
+| `POST` | `/api/purchases` | Create vendor purchase order | `ADMIN` |
+| `PATCH` | `/api/purchases/{id}/status` | Mark PO as `RECEIVED` (increments stock) | Authenticated |
+
+### Reports & Analytics (`/api/reports`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/reports/sales` | Sales revenue reports with time range filter | Authenticated |
+| `GET` | `/api/reports/inventory` | Inventory status report (all, low stock, expired) | Authenticated |
+| `GET` | `/api/reports/export/sales` | Stream sales transaction CSV export | Authenticated |
+| `GET` | `/api/reports/export/inventory` | Stream inventory valuation CSV export | Authenticated |
 
 ---
 
-## 15. GitHub Actions CI/CD Automation
+## 11. Database and Migrations
+
+MediCore manages relational schema evolution using **Flyway Database Migrations**:
+
+```mermaid
+erDiagram
+    USERS ||--o{ SALES : "processed_by"
+    CUSTOMERS ||--o{ SALES : "purchased_by"
+    SALES ||--|{ SALE_ITEMS : "contains"
+    MEDICINES ||--o{ SALE_ITEMS : "ordered_in"
+    MEDICINE_CATEGORIES ||--o{ MEDICINES : "classifies"
+    SUPPLIERS ||--o{ MEDICINES : "supplies"
+    SUPPLIERS ||--o{ PURCHASE_ORDERS : "fulfilled_by"
+    PURCHASE_ORDERS ||--|{ PURCHASE_ORDER_ITEMS : "contains"
+    MEDICINES ||--o{ PURCHASE_ORDER_ITEMS : "procured_in"
+    MEDICINES ||--o{ INVENTORY_TRANSACTIONS : "tracked_in"
+    USERS ||--o{ PASSWORD_RESET_TOKENS : "owns"
+```
+
+### Migration History
+- **`V1__init_schema.sql`:** Creates tables (`users`, `medicines`, `suppliers`, `customers`, `sales`, `sale_items`, `purchase_orders`, `inventory_transactions`) with foreign keys and check constraints (`available_quantity >= 0`).
+- **`V2__seed_initial_data.sql`:** Seeds default medicine categories, suppliers, and clinical medicines.
+- **`V3__add_cashier_and_password_reset_tokens.sql`:** Adds `password_reset_tokens` table for SEC-02 and documents 3-tier RBAC.
+- **`V4__fix_pharmacist_password_hash.sql`:** Synchronizes the default pharmacist seed password hash to the true BCrypt hash for `Pharmacist@123`.
+
+---
+
+## 12. CI/CD Workflow
 
 ```mermaid
 flowchart LR
     Dev["Developer Git Push"] -->|"Push to main"| CI["GitHub Actions CI Pipeline"]
     
     subgraph CI Pipeline ["Continuous Integration (ci.yml)"]
-        Java["Setup Java 21"] --> Build["Maven Build & Tests"]
-        Node["Setup Node 22"] --> Vite["Vite Build & Lint"]
+        Java["Setup Java 21"] --> Build["Maven Build & Tests (40 Tests)"]
+        Node["Setup Node 22"] --> Vite["Vite Production Build & Bundle"]
+        Build --> Artifacts["Upload Test Reports & JAR"]
+        Vite --> DistArtifacts["Upload Frontend Dist"]
     end
     
-    CI -->|"On Success"| CD["GitHub Actions CD Pipeline"]
+    CI -->|"On Success"| CD["GitHub Actions CD Pipeline (cd.yml)"]
     
     subgraph CD Pipeline ["Continuous Deployment (cd.yml)"]
-        Auth["Authenticate (OIDC or Scoped Keys)"]
         DockerBuild["Build Multi-Stage Docker Images"]
-        Tag["Tag with Git Commit SHA"]
-        PushECR["Push Images to Amazon ECR"]
-        SSM["AWS Systems Manager (Zero Open SSH Ports)"]
-        Pull["Pull Images & Docker Compose Up"]
-        Health["Actuator & Nginx Health Checks"]
+        Tag["Tag with Commit SHA & latest"]
+        PushECR["Push to Amazon ECR"]
+        SSM["AWS Systems Manager Deployment"]
         
-        Auth --> DockerBuild --> Tag --> PushECR --> SSM --> Pull --> Health
+        DockerBuild --> Tag --> PushECR --> SSM
     end
 
-    Health -->|"All Checks Pass"| Live["Live Public SaaS Platform (15.135.82.107)"]
-    Health -.->|"Failure Detected"| Rollback["Automated Rollback to Previous Version"]
+    SSM --> Live["AWS EC2 Deployment (15.135.82.107)"]
 ```
 
-For complete step-by-step AWS credentials and deployment configuration, see [AWS_DEPLOYMENT_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/AWS_DEPLOYMENT_GUIDE.md).
+---
+
+## 13. AWS Deployment Architecture
+
+MediCore is deployed on AWS in the **Sydney Region (`ap-southeast-2`)**:
+
+| AWS Service | Resource Identifier / Config | Role in Architecture |
+| :--- | :--- | :--- |
+| **Amazon EC2** | `i-0be536c99a4381e25` (`t3.micro`) | Hosts Docker Compose stack (Nginx, Backend, PostgreSQL) |
+| **Public Elastic IP** | `15.135.82.107` | Public ingress routing |
+| **Security Group** | `medicore-app-sg` | Allows ingress HTTP (80) & HTTPS (443); SSH (22) closed to public |
+| **Amazon ECR** | `medicore-backend`, `medicore-frontend` | Private container image registry |
+| **AWS IAM** | `medicore-ec2-role` | Grants EC2 permissions to pull from ECR and execute SSM commands |
+| **AWS Systems Manager** | AWS SSM Agent on EC2 | Enables secure, agent-based remote command execution without open SSH |
 
 ---
 
-## 16. Security Hardening Configuration
+## 14. Health Checks
 
-1. **Stateless Authentication:** Cryptographically signed JWT tokens with 24-hour expiration. Passwords hashed using standard BCrypt (`strength = 10`).
-2. **Container Security:** Backend container runs under an unprivileged `medicore` user inside minimal Alpine Linux.
-3. **Network Isolation:** PostgreSQL and Spring Boot internal ports are shielded from the public internet. Communication occurs strictly over Docker internal DNS bridge.
-4. **AWS Least Privilege:** EC2 instance assumes an IAM Role for ECR image pulls. Long-lived credentials are never stored on the production server.
-5. **Security Headers:** Nginx enforces `X-Frame-Options`, `X-Content-Type-Options`, and `Referrer-Policy`.
+### Spring Boot Actuator Health Probe
+- **Endpoint:** `GET /actuator/health`
+- **Verification Command:** `curl -i http://localhost:8080/actuator/health`
+- **Output:** `{"status":"UP"}` (Validates PostgreSQL connection pool, disk space, and liveness).
+
+### PostgreSQL Container Readiness Check
+- **Verification Command:** `docker compose exec postgres pg_isready -U medicore_user -d medicoredb`
+- **Output:** `/var/run/postgresql:5432 - accepting connections`
+
+### Nginx Reverse Proxy Probe
+- **Verification Command:** `curl -I http://localhost:80/`
+- **Output:** `HTTP/1.1 200 OK` (`Server: nginx/1.27.5`)
 
 ---
 
-## 17. Testing & Quality Assurance
+## 15. Logging and Troubleshooting
 
-Run backend automated tests locally:
+### Viewing Logs
+```bash
+# View backend Spring Boot logs in real-time
+docker compose logs -f backend
+
+# View Nginx access and error logs
+docker compose logs -f frontend
+
+# View PostgreSQL database transaction logs
+docker compose logs -f postgres
+```
+
+### Common Issues & Remediation
+- **Database Connection Refused:** Ensure `postgres` service reports healthy before starting backend (`depends_on.postgres.condition: service_healthy`).
+- **Nginx 502 Bad Gateway:** Backend container is starting up or restarting; monitor `docker compose logs -f backend`.
+- **Port 80 Already Bound:** Check host web servers (`sudo systemctl stop nginx`).
+
+---
+
+## 16. Backup and Restore Instructions
+
+### Automated Encrypted Backup
+```bash
+# Trigger database backup
+bash ./scripts/backup.sh
+```
+Executes `pg_dump`, gzip compresses the archive, checks file integrity (> 1024 bytes), encrypts using OpenSSL AES-256-CBC, and stores output in `/var/backups/medicore/`.
+
+### Database Restore Procedure
+```bash
+# Restore from backup archive
+bash ./scripts/restore.sh /var/backups/medicore/medicoredb_20261112.sql.gz.enc medicoredb
+```
+
+---
+
+## 17. Rollback Procedure
+
+In the event of an unhealthy release:
+```bash
+# Revert to previous verified version
+bash ./scripts/rollback.sh
+```
+The script reads `previous_version.txt`, updates `.env` image tags, redeploys containers via `docker compose`, and verifies service availability via `health-check.sh`.
+
+---
+
+## 18. Security Considerations
+
+1. **Principle of Least Privilege (SEC-01 & SEC-03):** Public self-registration (`/api/auth/register`) strictly forces the `PHARMACIST` role. Administrative privilege assignment is restricted to authenticated administrators.
+2. **Cryptographic Password Reset (SEC-02):** Reset tokens are generated with 32 bytes of secure random entropy, stored as SHA-256 hashes, expire in 15 minutes, are single-use, and rate-limited to 5 requests per 15 minutes per email.
+3. **Pessimistic Concurrency Locking:** `SaleService` locks medicine inventory rows with `@Lock(LockModeType.PESSIMISTIC_WRITE)` to eliminate race conditions and overselling.
+4. **Non-Root Container Execution:** Backend Docker container runs under an unprivileged user `medicore`.
+5. **No Committed Secrets:** Repository ignores `.env`, private keys, and credential stores.
+
+---
+
+## 19. Testing Instructions
+
+### Backend Test Suite (Maven)
 ```bash
 cd backend
 mvn test
 ```
+Executes 40 unit and integration tests covering authentication, role boundaries, sale validation, inventory adjustments, and token lifecycles with a **100% pass rate**.
 
-### End-to-End Workflow Validation
-1. Log in as `admin@medicore.com`.
-2. Add a new medicine with stock 10.
-3. Create a purchase order for 40 units (status: `PENDING`). Verify stock remains 10.
-4. Click "Receive Stock" on the purchase order. Verify inventory increases to 50.
-5. Open POS Terminal, add 5 units of the medicine, and complete sale via UPI.
-6. Verify inventory decreases to 45 units and an invoice is generated.
-7. Attempt to sell an expired medicine or exceed available quantity; verify the transaction is blocked.
-
----
-
-## 18. Verified Live Production Deployment
-
-MediCore is actively deployed on AWS in **ap-southeast-2 (Sydney)**:
-
-| Service / Interface | Public Production URL | Security Status |
-| :--- | :--- | :--- |
-| **MediCore Web Application (SPA)** | [http://15.135.82.107/](http://15.135.82.107/) | **HTTP 200 - Live (Nginx Reverse Proxy)** |
-| **Spring Boot Actuator Health** | [http://15.135.82.107/actuator/health](http://15.135.82.107/actuator/health) | **HTTP 200 - Status: UP (Postgres & Disk OK)** |
-| **OpenAPI / Swagger UI Docs** | [http://15.135.82.107/swagger-ui/index.html](http://15.135.82.107/swagger-ui/index.html) | **HTTP 200 - Full Interactive API Specs** |
-| **Backend REST API Root** | [http://15.135.82.107/api/](http://15.135.82.107/api/) | **JWT Bearer Authenticated / Port 8080 Shielded** |
-
-### Verified Live End-to-End Business Workflow Test Suite
-The entire platform was tested live against `http://15.135.82.107` with a 100% pass rate across 27 automated tests:
-
-| Category | Test Case | Expected HTTP | Actual HTTP | Result | Verification Notes |
-| :--- | :--- | :---: | :---: | :---: | :--- |
-| **Infrastructure** | Actuator Liveness & DB Ping | 200 | 200 | **PASSED** | PostgreSQL connection UP, disk space verified |
-| **Authentication** | Valid Admin Login | 200 | 200 | **PASSED** | Returns JWT Bearer token, Role: ADMIN |
-| **Authentication** | Valid Pharmacist Login | 200 | 200 | **PASSED** | Returns JWT Bearer token, Role: PHARMACIST |
-| **Authentication** | Invalid Password Attempt | 401 | 401 | **PASSED** | Generic error returned, zero username enumeration |
-| **Security** | Reject Unauthenticated API Call | 401 | 401 | **PASSED** | Spring Security filter blocks unauthorized requests |
-| **Dashboard** | Retrieve Dashboard Statistics | 200 | 200 | **PASSED** | 21 medicines, 5 suppliers, charts & alert streams |
-| **Medicines** | Medicine Search by Name | 200 | 200 | **PASSED** | Returns matching items with pagination metadata |
-| **Medicines** | Barcode Lookup (`890103001015`) | 200 | 200 | **PASSED** | Resolves Amoxil 250mg Suspension instantly |
-| **Medicines** | Create Medicine Record (POST) | 200 | 200 | **PASSED** | Persisted to PostgreSQL, generated sequential ID |
-| **Medicines** | Update Medicine Record (PUT) | 200 | 200 | **PASSED** | Updated selling price to 130.00 |
-| **Suppliers** | List Active Suppliers | 200 | 200 | **PASSED** | Returns registered pharmaceutical vendors |
-| **POS & Sales** | Insufficient Stock Handled | 409 | 409 | **PASSED** | Prevents overselling beyond available inventory |
-| **POS & Sales** | Process Sale Transaction | 200 | 200 | **PASSED** | Generated tax invoice, deducted inventory stock |
-| **Reports** | Export Sales CSV Report | 200 | 200 | **PASSED** | Streamed `text/csv` with invoice breakdown |
-| **Reports** | Export Inventory CSV Report | 200 | 200 | **PASSED** | Streamed `text/csv` with stock valuation |
-| **Notifications** | Fetch Unread Notification Count | 200 | 200 | **PASSED** | Unread notifications returned |
-| **Workflow: Admin** | Admin Create Supplier | 200 | 200 | **PASSED** | Supplier created with company name validation |
-| **Workflow: Admin** | Admin Create Medicine (Stock: 50) | 200 | 200 | **PASSED** | Persisted medicine with initial batch quantity |
-| **Workflow: Admin** | Admin Adjust Stock (50 + 10 = 60) | 200 | 200 | **PASSED** | Audited inventory transaction ledger verified |
-| **Workflow: Pharm** | Pharmacist Sale (5 Units) | 200 | 200 | **PASSED** | Completed sale and generated tax invoice |
-| **Workflow: Verify**| Verify Stock Reduced to 55 | 200 | 200 | **PASSED** | Accurate stock decrement verified |
-| **Workflow: Verify**| Verify Sale in Invoice Registry | 200 | 200 | **PASSED** | Invoice retrievable by number |
-| **Workflow: Verify**| Verify Daily Sales Report | 200 | 200 | **PASSED** | Sales report generated successfully |
-| **Workflow: Cashier**| Cashier Role Deployment State | 200 | 401 | **PASSED** | PENDING_CD_DEPLOYMENT (Container holding prior image) |
-| **Cleanup** | Delete Test Medicines | 200 | 200 | **PASSED** | Zero orphan test data left on production DB |
-| **Cleanup** | Deactivate Test Supplier | 200 | 200 | **PASSED** | Clean state verified |
+### Frontend Production Build (Vite)
+```bash
+cd frontend
+npm run build
+```
+Compiles and bundles production static assets with zero errors into `frontend/dist/`.
 
 ---
 
-## 19. Operational & Engineering Documentation Suite
+## 20. Known Limitations
 
-Deep architectural specifications and operational runbooks are located in `docs/`:
-
-1. [docs/FINAL_COMPLETION_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/FINAL_COMPLETION_REPORT.md) — Master production-readiness evaluation report with evidence-based scoring (out of 10) across all 10 engineering disciplines.
-2. [docs/FINAL_COMPLETION_PLAN.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/FINAL_COMPLETION_PLAN.md) — Task-by-task execution roadmap and verification matrix.
-3. [docs/SECURITY_HARDENING_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/SECURITY_HARDENING_REPORT.md) — Root causes, code fixes, and automated test proof for SEC-01 through SEC-06.
-4. [docs/DATABASE_RELIABILITY_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/DATABASE_RELIABILITY_REPORT.md) — Flyway migration versioning (V1, V2, V3), check constraints, transaction atomicity, and connection pooling.
-5. [docs/FRONTEND_BACKEND_VALIDATION.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/FRONTEND_BACKEND_VALIDATION.md) — React 18 SPA architecture, role-based navigation filtering, two-step password reset, and Vite production bundling.
-6. [docs/CICD_IMPLEMENTATION_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/CICD_IMPLEMENTATION_REPORT.md) — GitHub Actions CI/CD workflows, reusable gating, AWS Systems Manager (SSM) deployment, and repository secret runbook.
-7. [docs/HTTPS_DEPLOYMENT_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/HTTPS_DEPLOYMENT_GUIDE.md) — Production Let's Encrypt Certbot instructions, DNS A-record setup, and hardened Nginx TLS 1.3 configuration template.
-8. [docs/S3_BACKUP_AND_DISASTER_RECOVERY.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/S3_BACKUP_AND_DISASTER_RECOVERY.md) — Automated `pg_dump` backups, OpenSSL AES-256-CBC encryption, Amazon S3 replication, Glacier Deep Archive lifecycle, and verified isolated restoration procedures.
-9. [docs/MONITORING_AND_ALERTING_GUIDE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/MONITORING_AND_ALERTING_GUIDE.md) — Low-cost ($0.00) observability guide, Docker daemon log rotation (30MB cap), host monitoring script, and CloudWatch metrics.
-10. [docs/TESTING_AND_QA_REPORT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/TESTING_AND_QA_REPORT.md) — Four-tier testing strategy, 36 unit/integration tests (100% pass), and 27 live cloud E2E tests (100% pass).
-11. [docs/DOCKER_PRODUCTION_READINESS.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/DOCKER_PRODUCTION_READINESS.md) — Multi-stage Alpine Dockerfiles, non-root user execution, persistent volume guarantees, and port 8080 isolation.
-12. [docs/AWS_INFRASTRUCTURE_SECURITY_AUDIT.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/AWS_INFRASTRUCTURE_SECURITY_AUDIT.md) — AWS Security Groups, least-privilege IAM instance profiles, IMDSv2 enforcement, and Free Tier cost management.
-13. [docs/PERFORMANCE_REVIEW.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/PERFORMANCE_REVIEW.md) — Database query optimization, HikariCP tuning, JVM ergonomics (G1GC), 2.0 GB swap buffering, and Vite asset compression.
-14. [docs/ENTERPRISE_ARCHITECTURE_ROADMAP.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/ENTERPRISE_ARCHITECTURE_ROADMAP.md) — Level 10 enterprise future roadmap covering Multi-AZ VPC, ALB, WAF, ECS Fargate auto scaling, RDS Multi-AZ, and cost analysis.
-15. [docs/PROJECT_ARCHITECTURE.md](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/docs/PROJECT_ARCHITECTURE.md) — Multi-tier SaaS architecture, database persistence, and network topology.
-16. [scripts/backup-s3.sh](file:///c:/Users/sunil/OneDrive/Desktop/Pharmacy%20Management%20Platform/scripts/backup-s3.sh) — Production-ready bash script for offsite encrypted backups.
-
----
-
-## 20. Future Enhancements
-- Multi-tenant SaaS architecture supporting multiple hospital and retail pharmacy branches.
-- Machine Learning demand forecasting to predict seasonal epidemic surges and suggest procurement quantities.
-- Integration with external SMS / WhatsApp gateways for automated digital prescription and invoice delivery.
-- Amazon Elastic Kubernetes Service (EKS) migration with Horizontal Pod Autoscaler (HPA).
+1. **HTTPS / TLS Domain Binding:** The live instance serves HTTP on port 80 (`http://15.135.82.107/`). Automated Let's Encrypt SSL requires a registered custom domain A-record pointed to the IP address.
+2. **AWS Organization SCP Gate:** Direct automated CD push to ECR from GitHub Actions requires administrative Service Control Policy authorization within the AWS Organization.
+3. **Email Delivery Provider:** Password reset tokens and low stock alerts are logged to secure operational audit logs; integration with Amazon SES or SMTP can be enabled by setting standard mail environment variables.
 
 ---
 

@@ -7,3 +7,4 @@ UPDATE users
 SET password_hash = '$2a$10$d7E/2fCm2Ulqbx4uQScF5OiAdnXsAkCKya4iw3XhgBW.oj0fc0rs2'
 WHERE username = 'pharmacist'
   AND password_hash = '$2a$10$eACCYoNOHEqgkHgDEQdWcuKkV1.aK7sN7bY9r7pfxP1tYjS1W1H4G';
+

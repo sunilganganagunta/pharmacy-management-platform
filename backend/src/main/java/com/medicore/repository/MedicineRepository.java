@@ -1,9 +1,11 @@
 package com.medicore.repository;
 
 import com.medicore.entity.Medicine;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,6 +17,10 @@ import java.util.Optional;
 
 @Repository
 public interface MedicineRepository extends JpaRepository<Medicine, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Medicine m WHERE m.id = :id")
+    Optional<Medicine> findByIdWithLock(@Param("id") Long id);
 
     Optional<Medicine> findByBarcode(String barcode);
 
