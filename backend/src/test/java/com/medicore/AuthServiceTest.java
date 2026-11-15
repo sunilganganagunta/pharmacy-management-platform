@@ -238,11 +238,15 @@ class AuthServiceTest {
         assertTrue(passwordEncoder.matches("Pharmacist@123", updated.getPasswordHash()),
                 "Database password hash should have been updated to Pharmacist@123");
 
-        // Subsequent login with legacy Admin@123 should still succeed via fallback
+        // Subsequent login with Admin@123 must be strictly rejected
         AuthRequest legacyReq = new AuthRequest("pharmacist", "Admin@123");
-        AuthResponse legacyResp = authService.authenticateUser(legacyReq);
-        assertNotNull(legacyResp);
-        assertEquals("PHARMACIST", legacyResp.getRole());
+        assertThrows(BadCredentialsException.class, () -> authService.authenticateUser(legacyReq),
+                "Pharmacist login with Admin@123 must be rejected");
+
+        // Invalid password must be rejected
+        AuthRequest invalidReq = new AuthRequest("pharmacist", "WrongPassword@999");
+        assertThrows(BadCredentialsException.class, () -> authService.authenticateUser(invalidReq),
+                "Pharmacist login with invalid password must be rejected");
     }
 
     @Test

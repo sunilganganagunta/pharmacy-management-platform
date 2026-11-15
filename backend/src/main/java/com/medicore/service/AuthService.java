@@ -100,8 +100,8 @@ public class AuthService {
 
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
-                // Scenario A: Stored password hash matches legacy bootstrap password "Admin@123",
-                // while the caller provided the documented "Pharmacist@123"
+                // Auto-migration on first legitimate login: If stored password hash matches legacy bootstrap
+                // password "Admin@123", and caller provided "Pharmacist@123", migrate database hash to "Pharmacist@123"
                 if (passwordEncoder.matches("Admin@123", user.getPasswordHash()) &&
                         ("Pharmacist@123".equals(rawPassword) || rawPassword.equals(pharmacistDefaultPassword))) {
                     user.setPasswordHash(passwordEncoder.encode(rawPassword));
@@ -109,13 +109,6 @@ public class AuthService {
                     logger.info("Auto-migrated PHARMACIST password from legacy bootstrap seed to configured default upon authentication");
                     return authenticationManager.authenticate(
                             new UsernamePasswordAuthenticationToken(user.getUsername(), rawPassword)
-                    );
-                }
-                // Scenario B: Stored password hash matches "Pharmacist@123", but caller provided legacy bootstrap password "Admin@123"
-                if (passwordEncoder.matches(pharmacistDefaultPassword, user.getPasswordHash()) && "Admin@123".equals(rawPassword)) {
-                    logger.info("Accepted legacy bootstrap credentials for default PHARMACIST user");
-                    return authenticationManager.authenticate(
-                            new UsernamePasswordAuthenticationToken(user.getUsername(), pharmacistDefaultPassword)
                     );
                 }
             }

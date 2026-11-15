@@ -36,37 +36,14 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (username, password) => {
-    try {
-      const res = await api.post('/auth/login', { username, password });
-      if (res?.success && res.data) {
-        localStorage.setItem('medicore_token', res.data.token);
-        localStorage.setItem('medicore_user', JSON.stringify(res.data));
-        setUser(res.data);
-        return res.data;
-      }
-      throw new Error(res?.message || 'Login failed');
-    } catch (err) {
-      // Resilience fallback: If connected to a legacy database where the pharmacist
-      // seed was provisioned with the Admin@123 hash, auto-retry with Admin@123
-      const normalizedUser = (username || '').trim().toLowerCase();
-      if (
-        (normalizedUser === 'pharmacist' || normalizedUser === 'pharmacist@medicore.com') &&
-        password === 'Pharmacist@123'
-      ) {
-        try {
-          const fallbackRes = await api.post('/auth/login', { username: username.trim(), password: 'Admin@123' });
-          if (fallbackRes?.success && fallbackRes.data) {
-            localStorage.setItem('medicore_token', fallbackRes.data.token);
-            localStorage.setItem('medicore_user', JSON.stringify(fallbackRes.data));
-            setUser(fallbackRes.data);
-            return fallbackRes.data;
-          }
-        } catch {
-          // If fallback fails, throw the original error
-        }
-      }
-      throw new Error(err.message || 'Login failed');
+    const res = await api.post('/auth/login', { username, password });
+    if (res?.success && res.data) {
+      localStorage.setItem('medicore_token', res.data.token);
+      localStorage.setItem('medicore_user', JSON.stringify(res.data));
+      setUser(res.data);
+      return res.data;
     }
+    throw new Error(res?.message || 'Login failed');
   };
 
   const logout = () => {
